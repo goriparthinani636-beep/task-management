@@ -76,6 +76,8 @@ export const TasksScreen = () => {
   };
 
   useEffect(() => {
+    // All state updates occur after the awaited network request completes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadData();
   }, []);
 

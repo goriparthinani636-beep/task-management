@@ -1,8 +1,4 @@
-//User email + password enter chestadu → Sign In press chestadu → login() call avutundi → 
-// AuthContext backend ki login request pampistundi → success ayithe token save avutundi → 
-// App automatically Dashboard ki velthundi.
 
-// src/screens/LoginScreen.tsx
 import React, { useContext, useState } from 'react';
 import {
   View,
@@ -12,41 +8,90 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+
 import { Colors } from '../theme/colors';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { AuthContext } from '../context/AuthContext';
 
 export const LoginScreen = () => {
-  //Ikada LoginScreen ane React component create chestunnam.
-  //export ante vere files import chesukovachu.
   const auth = useContext(AuthContext);
-  //AuthContext lo unna value ni auth variable lo store cheyyi.
+
   if (!auth) {
     throw new Error('LoginScreen must be rendered inside AuthProvider.');
   }
 
   const { login } = auth;
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = async () => {
+  const handleLogin = async (): Promise<void> => {
     setErrorMessage('');
 
-    if (!email.trim() || !password.trim()) {
-      setErrorMessage('Please fill in both email and password.');
+    if (!email.trim() || !password) {
+      setErrorMessage('Please enter both email and password.');
+      return;
+    }
+
+    if (loading) {
       return;
     }
 
     setLoading(true);
+
     try {
-      await login(email, password);
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Unable to sign in. Please try again.',
-      );
+      await login(email.trim(), password);
+
+      // AuthContext lo token set ayyaka App.tsx
+      // automatically main app/dashboard ni chupistundi.
+    } catch (error: unknown) {
+      const err = error as {
+        message?: string;
+        response?: {
+          status?: number;
+          data?: unknown;
+        };
+        config?: {
+          baseURL?: string;
+          url?: string;
+        };
+        code?: string;
+      };
+
+      // Debug information: password/token values log cheyyamu.
+      console.log('LOGIN ERROR:', err.message);
+      console.log('LOGIN URL:', err.config?.baseURL);
+      console.log('LOGIN PATH:', err.config?.url);
+      console.log('LOGIN ERROR CODE:', err.code);
+      console.log('LOGIN HTTP STATUS:', err.response?.status);
+
+      if (err.response) {
+        const responseData = err.response.data;
+
+        const serverMessage =
+          typeof responseData === 'string'
+            ? responseData
+            : JSON.stringify(responseData);
+
+        setErrorMessage(
+          `HTTP ${err.response.status}: ${serverMessage}`,
+        );
+      } else if (
+        err.code === 'ECONNABORTED'
+      ) {
+        setErrorMessage(
+          'Request timed out. Please try again.',
+        );
+      } else {
+        setErrorMessage(
+          err.code === 'ERR_NETWORK'
+            ? 'Unable to connect to the server. Check your internet connection and try again.'
+            : err.message ?? 'Unable to sign in. Please try again.',
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -57,17 +102,29 @@ export const LoginScreen = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.keyboardContainer}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.card}>
-          <Text style={styles.brandTitle}>EMPLOYEE MANAGEMENT</Text>
-          <Text style={styles.heading}>Welcome back</Text>
-          <Text style={styles.subheading}>Sign in to continue to your dashboard</Text>
+          <Text style={styles.brandTitle}>
+            EMPLOYEE MANAGEMENT
+          </Text>
+
+          <Text style={styles.heading}>
+            Welcome back
+          </Text>
+
+          <Text style={styles.subheading}>
+            Sign in to continue to your dashboard
+          </Text>
 
           <Input
             label="Email"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
+            autoCorrect={false}
             keyboardType="email-address"
           />
 
@@ -76,11 +133,23 @@ export const LoginScreen = () => {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            autoCapitalize="none"
           />
 
-          <Button title="Sign In" onPress={handleLogin} loading={loading} />
+          <Button
+            title="Sign In"
+            onPress={handleLogin}
+            loading={loading}
+          />
 
-          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+          {errorMessage ? (
+            <Text
+              style={styles.errorText}
+              accessibilityRole="alert"
+            >
+              {errorMessage}
+            </Text>
+          ) : null}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -92,11 +161,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
   },
+
   card: {
     backgroundColor: Colors.card,
     borderRadius: 16,
@@ -107,6 +178,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
+
   brandTitle: {
     fontSize: 13,
     fontWeight: '800',
@@ -115,12 +187,14 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     marginBottom: 8,
   },
+
   heading: {
     fontSize: 24,
     fontWeight: '700',
     color: Colors.textDark,
     textAlign: 'center',
   },
+
   subheading: {
     fontSize: 14,
     color: Colors.textMuted,
@@ -128,6 +202,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     marginTop: 4,
   },
+
   errorText: {
     color: Colors.error,
     textAlign: 'center',
@@ -135,12 +210,3 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 });
-
-
-
-
-//LoginScreen = "User ni login cheyinchu"
-//AuthContext = "Login process manage cheyyi"
-//api.ts = "Backend tho maatladu"
-//secureStorage = "Token ni locker lo pettu"
-//App.tsx = "Login/App lo edi chupinchalo decide cheyyi"

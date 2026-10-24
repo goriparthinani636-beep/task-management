@@ -39,7 +39,6 @@ export const DashboardScreen = () => {
     //Idi dashboard data fetch cheyyadaniki main function.
     try {
       //try use to api request sucess aa failed aa handle chyadhaneke
-      setError(null);
       //pevious errors remove start with fresh request
       const response = await api.get('/dashboard/stats'); // entire page this line is most important
       //Backend lo /dashboard/stats endpoint ki GET request pampu.
@@ -48,7 +47,8 @@ export const DashboardScreen = () => {
       //Backend nundi vachina complete HTTP response ni response lo store chestunnam.
       setStats(response.data);
       //Backend data ni React state lo store chestunnam.
-    } catch (err: any) {   //API request fail ayithe catch block.
+      setError(null);
+    } catch {   //API request fail ayithe catch block.
       setError('Unable to load dashboard data. Pull down to retry.');
     } finally { //Success ayina failure ayina finally execute avtundi.
       setLoading(false);
@@ -57,6 +57,8 @@ export const DashboardScreen = () => {
   };
 
   useEffect(() => {
+    // All state updates occur after the awaited network request completes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchStats();
   }, []);
 

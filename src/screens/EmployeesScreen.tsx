@@ -54,7 +54,7 @@ export const EmployeesScreen = () => {
       const response = await api.get('/employees');
       setEmployees(response.data);
       setFilteredEmployees(response.data);
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Unable to fetch employees from server.');
     } finally {
       setLoading(false);
@@ -63,6 +63,8 @@ export const EmployeesScreen = () => {
   };
 
   useEffect(() => {
+    // All state updates occur after the awaited network request completes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEmployees();
   }, []);
 

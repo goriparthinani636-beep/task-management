@@ -12,6 +12,7 @@ import { DashboardScreen } from './src/screens/DashboardScreen';
 import { EmployeesScreen } from './src/screens/EmployeesScreen';
 import { TasksScreen } from './src/screens/TasksScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
+import { FileUploadScreen } from './src/screens/FileUploadScreen';
 import { Colors } from './src/theme/colors';
 
 type MainTabParamList = {
@@ -19,6 +20,7 @@ type MainTabParamList = {
   Employees: undefined;
   Tasks: undefined;
   Profile: undefined;
+  FileUpload: undefined;
 };
 
 type RootStackParamList = {
@@ -45,10 +47,11 @@ const MainTabs = () => (
       headerTitleStyle: { fontWeight: '700', color: Colors.textDark },
     }}
   >
-    <Tab.Screen name="Dashboard" component={DashboardScreen} />
+    <Tab.Screen name="Dashboard" component={DashboardScreen} /> 
     <Tab.Screen name="Employees" component={EmployeesScreen} />
     <Tab.Screen name="Tasks" component={TasksScreen} /> 
     <Tab.Screen name="Profile" component={ProfileScreen} />
+    <Tab.Screen name="FileUpload" component={FileUploadScreen}/>
   </Tab.Navigator>
 );
 
