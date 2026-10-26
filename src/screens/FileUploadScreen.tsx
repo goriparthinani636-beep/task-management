@@ -1,5 +1,5 @@
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -10,11 +10,11 @@ import {
   Text,
   TextInput,
   View,
-  Linking,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '../services/api';
+import { ALLOWED_EXTENSIONS, MAX_FILE_SIZE, deleteUploadedFile, openFile, uploadedFiles as parseUploadedFiles, type UploadedFile } from '../services/files';
 
 type SelectedFile = {
   id: string;
@@ -25,19 +25,7 @@ type SelectedFile = {
   remark: string;
 };
 
-type UploadedFile = {
-  id: number;
-  fileName: string;
-  remark: string;
-  fileFormat: string;
-  fileSize: number;
-  fileUrl: string;
-  uploadedAt: string;
-};
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_FILES = 5;
-const ALLOWED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'docx'];
 
 export const FileUploadScreen = () => {
   const [files, setFiles] = useState<SelectedFile[]>([]);
@@ -45,8 +33,31 @@ export const FileUploadScreen = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const deleting = useRef(false);
 
-  const loadUploadedFiles = useCallback(async (refresh = false) => {
+  const confirmDelete = (file: UploadedFile) => {
+    Alert.alert('Delete file?', `Permanently delete "${file.fileName}" from uploads and storage? If it is an employee resume, remove it from the employee profile first.`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        if (deleting.current) return;
+        deleting.current = true;
+        setDeletingId(file.id);
+        try {
+          await deleteUploadedFile(file.id);
+          setUploadedFiles(previous => previous.filter(item => item.id !== file.id));
+          Alert.alert('Deleted', 'The file was deleted.');
+        } catch (error: any) {
+          Alert.alert('Delete failed', error?.response?.data?.message ?? error?.message ?? 'Could not delete the file. Please retry.');
+        } finally {
+          deleting.current = false;
+          setDeletingId(null);
+        }
+      } },
+    ]);
+  };
+
+  const loadUploadedFiles = useCallback(async (refresh = false, reportError = true) => {
     if (refresh) {
       setIsRefreshing(true);
     } else {
@@ -55,7 +66,8 @@ export const FileUploadScreen = () => {
 
     try {
       const response = await api.get<UploadedFile[]>('/FileUploads');
-      setUploadedFiles(Array.isArray(response.data) ? response.data : []);
+      setUploadedFiles(parseUploadedFiles(response.data));
+      return true;
     } catch (error: any) {
       console.error(
         'LOAD FILES ERROR:',
@@ -63,12 +75,13 @@ export const FileUploadScreen = () => {
         error?.response?.data ?? error?.message,
       );
 
-      Alert.alert(
+      if (reportError) Alert.alert(
         'Unable to load files',
         error?.response?.status === 401
           ? 'Please log in again.'
           : 'Could not load uploaded files. Check your connection and try again.',
       );
+      return false;
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -223,17 +236,20 @@ export const FileUploadScreen = () => {
     setIsUploading(true);
 
     try {
-      await api.post('/FileUploads', formData, {
+      const response = await api.post('/FileUploads', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
         timeout: 60000,
       });
 
+      const savedFiles = parseUploadedFiles(response.data, files.length);
+      setUploadedFiles(previous => [...savedFiles, ...previous.filter(item => !savedFiles.some(saved => saved.id === item.id))]);
       setFiles([]);
-      await loadUploadedFiles();
-
-      Alert.alert('Success', 'Files uploaded successfully.');
+      const refreshed = await loadUploadedFiles(false, false);
+      Alert.alert('Upload complete', refreshed
+        ? 'Files uploaded successfully.'
+        : 'Files were uploaded, but the list could not be refreshed. Your uploaded files are shown; refresh again when connected.');
     } catch (error: any) {
       console.error(
         'FILE UPLOAD ERROR:',
@@ -244,6 +260,7 @@ export const FileUploadScreen = () => {
       const message =
         error?.response?.data?.message ??
         error?.response?.data?.title ??
+        error?.message ??
         'Upload failed. Check your internet connection and server configuration.';
 
       Alert.alert('Upload Failed', String(message));
@@ -254,15 +271,19 @@ export const FileUploadScreen = () => {
 
   const openUploadedFile = async (url: string) => {
     try {
-      await Linking.openURL(url);
-    } catch {
-      Alert.alert('Error', 'Unable to open this file.');
+      await openFile(url);
+    } catch (error) {
+      console.error('OPEN FILE ERROR:', error);
+      Alert.alert(
+        'Cannot Open File',
+        error instanceof Error ? error.message : 'Unable to open the saved file link.',
+      );
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Ask Files</Text>
+      <Text style={styles.title}>File Uploads</Text>
       <Text style={styles.help}>
         PDF, JPG, JPEG, PNG and DOCX. Maximum 5 files per upload, 5 MB each.
         Every file requires a remark.
@@ -271,7 +292,7 @@ export const FileUploadScreen = () => {
       <Button
         title="Select Files"
         onPress={pickFiles}
-        disabled={isUploading || files.length >= MAX_FILES}
+        disabled={isUploading || deletingId !== null || files.length >= MAX_FILES}
       />
 
       {files.length > 0 && (
@@ -309,7 +330,7 @@ export const FileUploadScreen = () => {
           <Button
             title={isUploading ? 'Uploading...' : 'Upload Files'}
             onPress={uploadFiles}
-            disabled={isUploading}
+            disabled={isUploading || deletingId !== null}
           />
         </>
       )}
@@ -348,6 +369,15 @@ export const FileUploadScreen = () => {
                 <Button
                   title="Open File"
                   onPress={() => void openUploadedFile(item.fileUrl)}
+                  disabled={deletingId === item.id}
+                />
+              </View>
+              <View style={styles.openButton}>
+                <Button
+                  title={deletingId === item.id ? 'Deleting...' : 'Delete File'}
+                  color="#DC2626"
+                  onPress={() => confirmDelete(item)}
+                  disabled={deletingId !== null || isUploading || isRefreshing}
                 />
               </View>
             </View>
@@ -359,7 +389,7 @@ export const FileUploadScreen = () => {
         <Button
           title="Refresh Uploaded Files"
           onPress={() => void loadUploadedFiles(true)}
-          disabled={isLoading || isRefreshing}
+          disabled={isLoading || isRefreshing || deletingId !== null}
         />
       </View>
     </View>

@@ -1,8 +1,7 @@
 // App.tsx
 import React, { useContext } from 'react';
-import { ActivityIndicator, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StatusBar, StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -14,6 +13,7 @@ import { TasksScreen } from './src/screens/TasksScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { FileUploadScreen } from './src/screens/FileUploadScreen';
 import { Colors } from './src/theme/colors';
+import { TabIcon } from './src/components/TabIcon';
 
 type MainTabParamList = {
   Dashboard: undefined;
@@ -28,30 +28,26 @@ type RootStackParamList = {
   App: undefined;
 };
 
-const PlaceholderScreen = ({ route }: BottomTabScreenProps<MainTabParamList>) => (
-  <View style={styles.center}>
-    <Text style={styles.title}>{route.name} Screen</Text>
-    <Text style={styles.subtitle}>Welcome to the App</Text>
-  </View>
-);
-
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 const MainTabs = () => (
   <Tab.Navigator
-    screenOptions={{
+    screenOptions={({ route }) => ({
+      tabBarIcon: ({ color, size, focused }) => (
+        <TabIcon name={route.name} color={color} size={size} focused={focused} />
+      ),
       tabBarActiveTintColor: Colors.primary,
       tabBarInactiveTintColor: Colors.textMuted,
       headerStyle: { backgroundColor: Colors.card },
       headerTitleStyle: { fontWeight: '700', color: Colors.textDark },
-    }}
+    })}
   >
     <Tab.Screen name="Dashboard" component={DashboardScreen} /> 
     <Tab.Screen name="Employees" component={EmployeesScreen} />
     <Tab.Screen name="Tasks" component={TasksScreen} /> 
     <Tab.Screen name="Profile" component={ProfileScreen} />
-    <Tab.Screen name="FileUpload" component={FileUploadScreen}/>
+    <Tab.Screen name="FileUpload" component={FileUploadScreen} options={{ title: 'Files' }} />
   </Tab.Navigator>
 );
 
