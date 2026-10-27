@@ -101,7 +101,7 @@ export default function AttendanceScreen() {
         setSelfieUri(null);
         Alert.alert(
           'Outside company location',
-          `Meeru company location nunchi ${Math.round(
+          `You are ${Math.round(
             meters,
           )} metres away from the office. Attendance requires being within ${configuredOffice.radiusMeters} metres.`,
         );
@@ -161,7 +161,7 @@ export default function AttendanceScreen() {
       setShowCamera(false);
     } catch (error) {
       console.error('Selfie capture failed:', error);
-      Alert.alert('Error', 'Selfie capture cheyyalekapoyamu.');
+      Alert.alert('Selfie capture failed', 'Unable to capture your selfie. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -170,7 +170,7 @@ export default function AttendanceScreen() {
   const submitAttendance = async () => {
     if (loading) return;
     if (!selfieUri) {
-      Alert.alert('Selfie required', 'Munduga selfie capture cheyyandi.');
+      Alert.alert('Selfie required', 'Please capture a selfie before submitting attendance.');
       return;
     }
 
@@ -201,7 +201,7 @@ export default function AttendanceScreen() {
       await api.post('/attendance', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       await loadHistory();
 
-      Alert.alert('Success', 'Attendance submit ayyindi.');
+      Alert.alert('Success', 'Attendance submitted successfully.');
       setSelfieUri(null);
       setLocation(null);
       setDistance(null);
@@ -210,7 +210,7 @@ export default function AttendanceScreen() {
 
       const message =
         error?.response?.data?.message ??
-        'Attendance submit avvaledu. Backend attendance API ready unda check cheyyandi.';
+        'Unable to submit attendance. Please check your connection and try again.';
 
       Alert.alert('Attendance failed', message);
     } finally {
@@ -260,7 +260,7 @@ export default function AttendanceScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Attendance</Text>
       <Text style={styles.subtitle}>
-        Company location lo selfie tho attendance mark cheyyandi.
+        Mark your attendance with a selfie within the office attendance area.
       </Text>
 
       {(!isManager || user?.employeeId) && <>
