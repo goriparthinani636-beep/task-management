@@ -1,0 +1,452 @@
+
+import React, { useRef, useState, useCallback, useContext } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ScrollView,
+} from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useFocusEffect } from 'expo-router';
+import { AuthContext } from '../context/AuthContext';
+import { api } from '../services/api';
+import { AttendanceError, getAttendanceOffice, getAttendanceLocation, type Office } from '../services/attendanceLocation';
+
+type AttendanceRecord = { id: number; employeeId: number; employeeName: string; checkedInAt: string; workDate: string };
+
+type AttendanceLocation = {
+  latitude: number;
+  longitude: number;
+};
+
+function getDistanceInMeters(
+  pointA: AttendanceLocation,
+  pointB: AttendanceLocation,
+) {
+  const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+  const earthRadius = 6371000;
+
+  const dLat = toRadians(pointB.latitude - pointA.latitude);
+  const dLon = toRadians(pointB.longitude - pointA.longitude);
+  const lat1 = toRadians(pointA.latitude);
+  const lat2 = toRadians(pointB.latitude);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) *
+      Math.cos(lat2) *
+      Math.sin(dLon / 2) ** 2;
+
+  return (
+    earthRadius *
+    2 *
+    Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  );
+}
+
+export default function AttendanceScreen() {
+  const { user } = useContext(AuthContext);
+  const isManager = user?.role === 'Manager';
+  const [office, setOffice] = useState<Office | null>(null);
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [historyError, setHistoryError] = useState('');
+  const [photo, setPhoto] = useState<string | null>(null);
+  const loadHistory = useCallback(async () => {
+    try { setRecords((await api.get('/attendance')).data); setHistoryError(''); }
+    catch { setHistoryError('Could not load attendance history.'); }
+  }, []);
+  useFocusEffect(useCallback(() => { void loadHistory(); }, [loadHistory]));
+  const cameraRef = useRef<CameraView>(null);
+
+  const [cameraPermission, requestCameraPermission] =
+    useCameraPermissions();
+
+  const [, setLocation] =
+    useState<AttendanceLocation | null>(null);
+
+  const [selfieUri, setSelfieUri] = useState<string | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [distance, setDistance] = useState<number | null>(null);
+
+  const checkLocation = async () => {
+    try {
+      const configuredOffice = await getAttendanceOffice();
+      setOffice(configuredOffice);
+      const current = await getAttendanceLocation();
+
+      const currentLocation = {
+        latitude: current.coords.latitude,
+        longitude: current.coords.longitude,
+      };
+
+      const companyLocation = {
+        latitude: configuredOffice.latitude,
+        longitude: configuredOffice.longitude,
+      };
+
+      const meters = getDistanceInMeters(
+        currentLocation,
+        companyLocation,
+      );
+
+      setLocation(currentLocation);
+      setDistance(meters);
+
+      if (meters > configuredOffice.radiusMeters) {
+        setSelfieUri(null);
+        Alert.alert(
+          'Outside company location',
+          `Meeru company location nunchi ${Math.round(
+            meters,
+          )} metres away from the office. Attendance requires being within ${configuredOffice.radiusMeters} metres.`,
+        );
+        return false;
+      }
+
+      return currentLocation;
+    } catch (error: any) {
+      console.error('Location check failed:', error);
+      Alert.alert(
+        error instanceof AttendanceError ? error.title : 'Location error',
+        error?.message ?? 'Unable to get your current location. Please try again.',
+      );
+      return false;
+    }
+  };
+
+  const startAttendance = async () => {
+    if (loading) return;
+    setLoading(true);
+    setSelfieUri(null);
+    try {
+      const allowed = await checkLocation();
+      if (!allowed) return;
+      const permission = cameraPermission?.granted ? cameraPermission : await requestCameraPermission();
+      if (!permission.granted) { Alert.alert('Camera permission required', 'Allow camera access to capture your selfie.'); return; }
+      setShowCamera(true);
+    } finally { setLoading(false); }
+  };
+
+  const captureSelfie = async () => {
+    if (loading || !cameraRef.current) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Recheck location immediately before capturing the selfie.
+      const allowed = await checkLocation();
+
+      if (!allowed) {
+        setShowCamera(false);
+        return;
+      }
+
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.7,
+        base64: false,
+      });
+
+      if (!photo?.uri) {
+        throw new Error('Selfie capture failed');
+      }
+
+      setSelfieUri(photo.uri);
+      setShowCamera(false);
+    } catch (error) {
+      console.error('Selfie capture failed:', error);
+      Alert.alert('Error', 'Selfie capture cheyyalekapoyamu.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitAttendance = async () => {
+    if (loading) return;
+    if (!selfieUri) {
+      Alert.alert('Selfie required', 'Munduga selfie capture cheyyandi.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Check location again before sending attendance.
+      const allowed = await checkLocation();
+
+      if (!allowed) {
+        return;
+      }
+
+      const formData = new FormData();
+
+      formData.append(
+        'selfie',
+        {
+          uri: selfieUri,
+          name: `attendance-${Date.now()}.jpg`,
+          type: 'image/jpeg',
+        } as unknown as Blob,
+      );
+
+      formData.append('latitude', String(allowed.latitude));
+      formData.append('longitude', String(allowed.longitude));
+
+      await api.post('/attendance', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await loadHistory();
+
+      Alert.alert('Success', 'Attendance submit ayyindi.');
+      setSelfieUri(null);
+      setLocation(null);
+      setDistance(null);
+    } catch (error: any) {
+      console.error('Attendance submission failed:', error);
+
+      const message =
+        error?.response?.data?.message ??
+        'Attendance submit avvaledu. Backend attendance API ready unda check cheyyandi.';
+
+      Alert.alert('Attendance failed', message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (showCamera) {
+    return (
+      <View style={styles.cameraContainer}>
+        <CameraView
+          ref={cameraRef}
+          style={styles.camera}
+          facing="front"
+        />
+
+        <View style={styles.cameraActions}>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => setShowCamera(false)}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>Cancel</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={captureSelfie}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>Capture Selfie</Text>
+          </TouchableOpacity>
+        </View>
+
+        {loading && (
+          <ActivityIndicator
+            size="large"
+            color="#ffffff"
+            style={styles.loader}
+          />
+        )}
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Attendance</Text>
+      <Text style={styles.subtitle}>
+        Company location lo selfie tho attendance mark cheyyandi.
+      </Text>
+
+      {(!isManager || user?.employeeId) && <>
+      <View style={styles.infoCard}>
+        <Text style={styles.infoLabel}>Allowed radius</Text>
+        <Text style={styles.infoValue}>{office ? `${office.radiusMeters} metres` : 'Office boundary checked when marking attendance'}</Text>
+
+        {distance !== null && (
+          <>
+            <Text style={styles.infoLabel}>Distance from company</Text>
+            <Text style={styles.infoValue}>
+              {Math.round(distance)} metres
+            </Text>
+
+            <Text
+              style={[
+                styles.status,
+                distance <= (office?.radiusMeters ?? 500)
+                  ? styles.allowed
+                  : styles.denied,
+              ]}
+            >
+              {distance <= (office?.radiusMeters ?? 500)
+                ? 'Within allowed area'
+                : 'Outside allowed area'}
+            </Text>
+          </>
+        )}
+      </View>
+
+      {selfieUri && (
+        <View style={styles.previewContainer}>
+          <Image
+            source={{ uri: selfieUri }}
+            style={styles.preview}
+          />
+          <Text style={styles.previewLabel}>Selfie captured</Text>
+        </View>
+      )}
+
+      <TouchableOpacity
+        style={styles.primaryButton}
+        onPress={startAttendance}
+        disabled={loading}
+      >
+        <Text style={styles.buttonText}>
+          Check Location & Take Selfie
+        </Text>
+      </TouchableOpacity>
+
+      {selfieUri && (
+        <TouchableOpacity
+          style={styles.submitButton}
+          onPress={submitAttendance}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>Submit Attendance</Text>
+        </TouchableOpacity>
+      )}
+
+      </>}
+      <Text style={styles.title}>{isManager ? 'All attendance' : 'My attendance'}</Text>
+      <TouchableOpacity onPress={loadHistory}><Text>Refresh history</Text></TouchableOpacity>
+      {historyError ? <Text>{historyError}</Text> : records.length === 0 ? <Text>No attendance recorded yet.</Text> : null}
+      {records.map(record => <View style={styles.infoCard} key={record.id}>
+        <Text>{record.employeeName} · #{record.employeeId}</Text>
+        <Text>{record.workDate} · {new Date(record.checkedInAt).toLocaleTimeString()}</Text>
+        <TouchableOpacity onPress={async () => {
+          try { setPhoto((await api.get('/attendance/' + record.id + '/selfie')).data.dataUri); }
+          catch { Alert.alert('Error', 'Unable to load attendance selfie.'); }
+        }}><Text>View selfie</Text></TouchableOpacity>
+      </View>)}
+      {photo && <TouchableOpacity onPress={() => setPhoto(null)}><Image source={{ uri: photo }} style={styles.preview} /><Text>Close selfie</Text></TouchableOpacity>}
+      {loading && (
+        <ActivityIndicator
+          size="large"
+          color="#2563eb"
+          style={styles.loader}
+        />
+      )}
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    backgroundColor: '#f8fafc',
+    padding: 20,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    marginBottom: 24,
+  },
+  infoCard: {
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 14,
+    marginBottom: 24,
+    elevation: 2,
+  },
+  infoLabel: {
+    color: '#64748b',
+    fontSize: 13,
+    marginTop: 8,
+  },
+  infoValue: {
+    color: '#0f172a',
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  status: {
+    marginTop: 12,
+    fontWeight: '600',
+  },
+  allowed: {
+    color: '#15803d',
+  },
+  denied: {
+    color: '#b91c1c',
+  },
+  previewContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  preview: {
+    width: 180,
+    height: 180,
+    borderRadius: 12,
+  },
+  previewLabel: {
+    marginTop: 8,
+    color: '#15803d',
+    fontWeight: '600',
+  },
+  primaryButton: {
+    backgroundColor: '#2563eb',
+    paddingVertical: 15,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  submitButton: {
+    backgroundColor: '#15803d',
+    paddingVertical: 15,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  secondaryButton: {
+    backgroundColor: '#475569',
+    paddingVertical: 15,
+    paddingHorizontal: 18,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  cameraContainer: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  camera: {
+    flex: 1,
+  },
+  cameraActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#000000',
+  },
+  loader: {
+    marginTop: 18,
+  },
+});

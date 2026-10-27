@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from 'expo-router';
 import { api } from '../services/api';
 import { ALLOWED_EXTENSIONS, MAX_FILE_SIZE, deleteUploadedFile, openFile, uploadedFiles as parseUploadedFiles, type UploadedFile } from '../services/files';
 

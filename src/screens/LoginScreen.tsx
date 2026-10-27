@@ -7,6 +7,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 
 import { Colors } from '../theme/colors';
@@ -23,6 +24,7 @@ export const LoginScreen = () => {
 
   const { login } = auth;
 
+  const [role, setRole] = useState<'Manager' | 'Employee'>('Employee');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,7 +45,7 @@ export const LoginScreen = () => {
     setLoading(true);
 
     try {
-      await login(email.trim(), password);
+      await login(email.trim(), password, role);
 
       // AuthContext lo token set ayyaka App.tsx
       // automatically main app/dashboard ni chupistundi.
@@ -116,9 +118,17 @@ export const LoginScreen = () => {
           </Text>
 
           <Text style={styles.subheading}>
-            Sign in to continue to your dashboard
+            Sign in as a manager or employee
           </Text>
 
+          <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+            {(['Employee', 'Manager'] as const).map(option => <TouchableOpacity key={option}
+              accessibilityRole="button" accessibilityState={{ selected: role === option }}
+              onPress={() => { setRole(option); setErrorMessage(''); }} disabled={loading}
+              style={{ flex: 1, padding: 14, borderRadius: 8, backgroundColor: role === option ? Colors.primary : '#e2e8f0' }}>
+              <Text style={{ textAlign: 'center', color: role === option ? 'white' : Colors.textDark }}>{option} login</Text>
+            </TouchableOpacity>)}
+          </View>
           <Input
             label="Email"
             value={email}

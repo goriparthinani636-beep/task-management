@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback, useContext, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,9 @@ import {
   RefreshControl,
   ScrollView,
 } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { loadMyEmployee, loadScopedTasks } from '../services/employeeScope';
+import { AuthContext } from '../context/AuthContext';
 import { api } from '../services/api';
 import { Colors } from '../theme/colors';
 
@@ -41,6 +44,10 @@ const STATUS_FILTERS = ['All', 'Pending', 'InProgress', 'Completed'];
 const PRIORITIES = ['Low', 'Medium', 'High'];
 
 export const TasksScreen = () => {
+  const { user } = useContext(AuthContext);
+  const isManager = user?.role === 'Manager';
+  const generation = useRef(0);
+  const [loadError, setLoadError] = useState('');
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [employees, setEmployees] = useState<EmployeeSimple[]>([]);
   const [selectedStatus, setSelectedStatus] = useState('All');
@@ -59,32 +66,36 @@ export const TasksScreen = () => {
   const [priority, setPriority] = useState('Medium');
   const [status, setStatus] = useState('Pending');
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
+    const current = ++generation.current;
+    setLoadError('');
     try {
-      const [tasksRes, empRes] = await Promise.all([
-        api.get('/tasks'),
-        api.get('/employees'),
+      if (!user) return;
+      const [assigned, employeeList] = await Promise.all([
+        loadScopedTasks(user),
+        user.role === 'Manager' ? api.get('/employees').then(response => response.data) : loadMyEmployee(user).then(employee => [employee]),
       ]);
-      setTasks(tasksRes.data);
-      setEmployees(empRes.data);
-    } catch {
-      Alert.alert('Error', 'Unable to load tasks or employees.');
+      if (generation.current !== current) return;
+      setTasks(assigned);
+      setEmployees(employeeList);
+    } catch (error: any) {
+      if (generation.current !== current) return;
+      setTasks([]); setEmployees([]);
+      setLoadError(error?.response?.status === 404
+        ? 'The employee tasks endpoint is missing. Deploy the updated EmployeeApi backend.'
+        : error?.message ?? 'Unable to load tasks. Pull down to retry.');
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (generation.current === current) { setLoading(false); setRefreshing(false); }
     }
-  };
-
-  useEffect(() => {
-    // All state updates occur after the awaited network request completes.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadData();
-  }, []);
-
+  }, [user]);
+  useFocusEffect(useCallback(() => {
+    void loadData();
+    return () => { generation.current++; };
+  }, [loadData]));
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    loadData();
-  }, []);
+    void loadData();
+  }, [loadData]);
 
   const filteredTasks = tasks.filter((t) => {
     if (selectedStatus === 'All') return true;
@@ -226,9 +237,9 @@ export const TasksScreen = () => {
             </TouchableOpacity>
           ))}
         </ScrollView>
-        <TouchableOpacity style={styles.addBtn} onPress={openAddModal}>
+        {isManager && <TouchableOpacity style={styles.addBtn} onPress={openAddModal}>
           <Text style={styles.addBtnText}>+ Add</Text>
-        </TouchableOpacity>
+        </TouchableOpacity>}
       </View>
 
       {/* Task List */}
@@ -238,7 +249,7 @@ export const TasksScreen = () => {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No tasks found for this filter.</Text>
+            <Text style={styles.emptyText}>{loadError || (isManager ? 'No tasks found for this filter.' : 'No tasks assigned to you for this filter. Your manager can assign tasks from their login.')}</Text>
           </View>
         }
         renderItem={({ item }) => {
@@ -275,7 +286,7 @@ export const TasksScreen = () => {
                 </Text>
               </View>
 
-              <View style={styles.actionRow}>
+              {isManager && <View style={styles.actionRow}>
                 <TouchableOpacity style={styles.editBtn} onPress={() => openEditModal(item)}>
                   <Text style={styles.editBtnText}>Edit</Text>
                 </TouchableOpacity>
@@ -285,7 +296,7 @@ export const TasksScreen = () => {
                 >
                   <Text style={styles.deleteBtnText}>Delete</Text>
                 </TouchableOpacity>
-              </View>
+              </View>}
             </View>
           );
         }}

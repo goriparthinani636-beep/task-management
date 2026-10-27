@@ -32,12 +32,27 @@
             "usesCleartextTraffic": true
           }
         }
+      ],
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow EmployeeApp to take your attendance selfie.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow EmployeeApp to verify your office location for attendance."
+        }
       ]
     ],
     "extra": {
       "eas": {
         "projectId": "2564aff3-ae0e-477e-ab6f-ddb96ce58718"
       }
-    }
+    },
+    "scheme": "employeeapp"
   }
 }

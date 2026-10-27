@@ -7,11 +7,14 @@ import React, {
 
 import { api, onSessionExpired } from '../services/api';
 import { secureStorage } from '../storage/secureStorage';
+import { validateSessionUser } from '../services/employeeScope';
 
 interface User {
   id: number;
   name: string;
-  role: string;
+  role: 'Manager' | 'Employee';
+  email: string;
+  employeeId: number | null;
   [key: string]: unknown;
 }
 
@@ -19,7 +22,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (email: string, pass: string) => Promise<void>;
+  login: (email: string, pass: string, role: 'Manager' | 'Employee') => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -66,7 +69,7 @@ export const AuthProvider: React.FC<{
         const response = await api.get('/auth/me');
 
         const data = response.data;
-        const userData = data.user ?? data;
+        const userData = validateSessionUser(data.user ?? data);
 
         if (mounted) {
           setUser(userData);
@@ -100,12 +103,14 @@ export const AuthProvider: React.FC<{
 
   const login = async (
     email: string,
-    pass: string
+    pass: string,
+    role: 'Manager' | 'Employee'
   ): Promise<void> => {
     try {
       const response = await api.post('/auth/login', {
         email: email.trim(),
         password: pass,
+        role,
       });
 
       const data = response.data;
@@ -117,18 +122,14 @@ export const AuthProvider: React.FC<{
       }
 
       // Login response lo user object kuda ravali.
-      if (!data.user) {
-        throw new Error(
-          'The server login response is missing user details.'
-        );
-      }
+      const userData = validateSessionUser(data.user, email, role);
 
       await secureStorage.saveTokens(
         data.accessToken,
         data.refreshToken
       );
 
-      setUser(data.user);
+      setUser(userData);
       setToken(data.accessToken);
     } catch (error: any) {
       let message = 'Login failed. Please try again.';

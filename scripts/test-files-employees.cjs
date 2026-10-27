@@ -29,6 +29,20 @@ test('employee save verifies the persisted record after update', async () => {
   assert.deepEqual(calls, ['/employees/3', '/employees/3']);
 });
 
+test('employee login password is sent for saving but never expected in profile responses', async () => {
+  let request;
+  const api = {
+    post: async (path, body) => { request = body; return { data: { id: 15 } }; },
+    get: async () => ({ data: { id: 15, ...payload } }),
+  };
+  const { saveEmployee } = load('src/services/employees.ts', { './api': { api } });
+  const saved = await saveEmployee(payload, undefined, undefined, 'test-password');
+  assert.equal(request.password, 'test-password');
+  assert.equal(saved.id, 15);
+  assert.equal(saved.password, undefined);
+  assert.equal(payload.password, undefined);
+});
+
 test('employee save rejects success when backend silently drops the resume', async () => {
   const { resumeUrl, resumeFileName, ...withoutResume } = payload;
   const api = {

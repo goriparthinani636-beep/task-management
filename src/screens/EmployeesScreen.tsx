@@ -1,6 +1,5 @@
-
 import React, { useMemo, useRef, useState, useCallback } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import {
   View,
@@ -79,6 +78,7 @@ export const EmployeesScreen = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [department, setDepartment] = useState('');
   const [designation, setDesignation] = useState('');
@@ -131,6 +131,7 @@ export const EmployeesScreen = () => {
     setFirstName('');
     setLastName('');
     setEmail('');
+    setPassword('');
     setPhone('');
     setDepartment('');
     setDesignation('');
@@ -149,6 +150,7 @@ export const EmployeesScreen = () => {
     setFirstName(emp.firstName || '');
     setLastName(emp.lastName || '');
     setEmail(emp.email || '');
+    setPassword('');
     setPhone(emp.phone || '');
     setDepartment(emp.department || '');
     setDesignation(emp.designation || '');
@@ -215,6 +217,10 @@ export const EmployeesScreen = () => {
       );
       return;
     }
+    if ((!editingEmployee || password) && password.length < 6) {
+      Alert.alert('Login password required', 'Enter an employee login password with at least 6 characters.');
+      return;
+    }
     if (!pickedResume && resumeUrl.trim()) {
       const validUrl = /^https?:\/\/\S+$/i.test(resumeUrl.trim());
       if (!validUrl) {
@@ -250,12 +256,14 @@ export const EmployeesScreen = () => {
       };
       const saved: Employee = await saveEmployee(payload, editingEmployee?.id, id => {
         setEditingEmployee({ ...payload, id });
-      });
+        setPassword('');
+      }, password || undefined);
       setEmployees(previous => [saved, ...previous.filter(emp => emp.id !== saved.id)]);
       setModalVisible(false);
+      setPassword('');
       setPickedResume(null);
       setProfileEmployee(saved);
-      Alert.alert('Success', 'Employee and resume saved successfully.');
+      Alert.alert('Success', 'Employee details and login saved successfully.');
     } catch (error: any) {
       console.error(
         'EMPLOYEE / RESUME SAVE ERROR:',
@@ -371,6 +379,7 @@ export const EmployeesScreen = () => {
                 <Text style={styles.name}>
                   {item.firstName} {item.lastName}
                 </Text>
+                <Text style={styles.viewHint}>Employee #{item.id}</Text>
                 <Text style={styles.designation}>
                   {item.designation} • {item.department}
                 </Text>
@@ -513,7 +522,12 @@ export const EmployeesScreen = () => {
               <TextInput
                 style={styles.input}
                 value={firstName}
-                onChangeText={setFirstName}
+                onChangeText={value => {
+                  setFirstName(value);
+                  const previousEmail = firstName.trim().toLowerCase().replace(/[^a-z0-9]/g, '') + '@gmail.com';
+                  const loginName = value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+                  if (!editingEmployee && (!email || email === previousEmail)) setEmail(loginName ? loginName + '@gmail.com' : '');
+                }}
                 placeholder="First name"
               />
               <Text style={styles.label}>Last Name *</Text>
@@ -523,7 +537,7 @@ export const EmployeesScreen = () => {
                 onChangeText={setLastName}
                 placeholder="Last name"
               />
-              <Text style={styles.label}>Email *</Text>
+              <Text style={styles.label}>Email / login email *</Text>
               <TextInput
                 style={styles.input}
                 value={email}
@@ -532,6 +546,11 @@ export const EmployeesScreen = () => {
                 autoCapitalize="none"
                 placeholder="employee@example.com"
               />
+              <Text style={styles.label}>{editingEmployee ? 'New login password (optional)' : 'Login password *'}</Text>
+              <TextInput style={styles.input} value={password} onChangeText={setPassword}
+                secureTextEntry autoCapitalize="none" autoCorrect={false}
+                placeholder={editingEmployee ? 'Leave blank to keep current password' : 'At least 6 characters'} />
+              <Text style={styles.resumeDescription}>This email and password are used for Employee login. Passwords are never displayed after saving.</Text>
               <Text style={styles.label}>Phone</Text>
               <TextInput
                 style={styles.input}

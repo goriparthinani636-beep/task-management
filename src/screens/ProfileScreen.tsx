@@ -1,4 +1,5 @@
-import React, { useContext } from 'react';
+import { Link } from 'expo-router';
+import React, { useContext, useState } from 'react';
 import {
   View,
   Text,
@@ -6,11 +7,17 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
+  TextInput,
+  Button,
 } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
+import { api } from '../services/api';
 import { Colors } from '../theme/colors';
 
 export const ProfileScreen = () => {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [saving, setSaving] = useState(false);
   const auth = useContext(AuthContext);
 
   if (!auth) {
@@ -18,8 +25,7 @@ export const ProfileScreen = () => {
   }
 
   const { user, logout } = auth;
-  // Safely cast user as any so TypeScript doesn't throw property errors
-  const currentUser = user as any;
+  const currentUser = user;
 
   const handleLogout = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -34,10 +40,10 @@ export const ProfileScreen = () => {
     ]);
   };
 
-  const emailText: string = currentUser?.email || (typeof user === 'string' ? user : 'admin@example.com');
-  const roleText: string = currentUser?.role || 'Admin';
+  const emailText: string = currentUser?.email || '';
+  const roleText: string = currentUser?.role || '';
   const initial: string = emailText ? emailText[0].toUpperCase() : 'A';
-  const displayName: string = currentUser?.name || emailText.split('@')[0] || 'Administrator';
+  const displayName: string = currentUser?.name || emailText.split('@')[0] || 'My account';
 
   return (
     <ScrollView style={styles.container}>
@@ -54,13 +60,14 @@ export const ProfileScreen = () => {
         </View>
       </View>
 
+      {user?.role === 'Manager' && <Link href="/accounts" style={{ padding: 16, color: Colors.primary }}>Manage login accounts</Link>}
       {/* Account Details Section */}
       <View style={styles.sectionCard}>
         <Text style={styles.sectionTitle}>Account Details</Text>
 
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>User ID</Text>
-          <Text style={styles.infoValue}>#{currentUser?.id ?? 1}</Text>
+          <Text style={styles.infoValue}>#{currentUser?.id ?? '—'}</Text>
         </View>
 
         <View style={styles.infoRow}>
@@ -76,6 +83,22 @@ export const ProfileScreen = () => {
         </View>
       </View>
 
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>Change password</Text>
+        <TextInput placeholder="Current password" accessibilityLabel="Current password" secureTextEntry value={currentPassword} onChangeText={setCurrentPassword} autoCapitalize="none" style={{ padding: 12 }} />
+        <TextInput placeholder="New password (6+ characters)" accessibilityLabel="New password" secureTextEntry value={newPassword} onChangeText={setNewPassword} autoCapitalize="none" style={{ padding: 12 }} />
+        <Button title={saving ? 'Saving…' : 'Change password'} disabled={saving} onPress={async () => {
+          if (saving) return;
+          setSaving(true);
+          try {
+            await api.post('/auth/change-password', { currentPassword, newPassword });
+            setCurrentPassword(''); setNewPassword('');
+            Alert.alert('Password changed', 'Please sign in using your new password.');
+            await logout();
+          } catch (error: any) { Alert.alert('Password change failed', error?.response?.data?.message ?? 'Please try again.'); }
+          finally { setSaving(false); }
+        }} />
+      </View>
       {/* Logout Action */}
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
         <Text style={styles.logoutBtnText}>Log Out</Text>

@@ -24,10 +24,11 @@ export async function removeEmployeeResume(id: number) {
   return saved;
 }
 
-export async function saveEmployee(payload: EmployeePayload, id?: number, onAccepted?: (id: number) => void) {
+export async function saveEmployee(payload: EmployeePayload, id?: number, onAccepted?: (id: number) => void, password?: string) {
+  const request = password ? { ...payload, password } : payload;
   const result = id !== undefined
-    ? await api.put(`/employees/${id}`, payload)
-    : await api.post('/employees', payload);
+    ? await api.put(`/employees/${id}`, request)
+    : await api.post('/employees', request);
   if (result.data?.success === false) {
     throw new Error(result.data.message || 'The server rejected the employee changes.');
   }
