@@ -46,7 +46,8 @@
         {
           "locationWhenInUsePermission": "Allow EmployeeApp to verify your office location for attendance."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {
