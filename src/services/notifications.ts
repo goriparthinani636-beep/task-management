@@ -1,4 +1,4 @@
-import * as Notifications from 'expo-notifications';
+import { getNativeNotifications } from './nativeNotifications';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { notificationTaskId } from './notificationTarget';
@@ -8,7 +8,7 @@ export function setNotificationAccount(user: { id: number; employeeId: number | 
   foregroundAccount = user;
 }
 
-Notifications.setNotificationHandler({
+getNativeNotifications()?.setNotificationHandler({
   handleNotification: async notification => ({
     shouldShowBanner: notificationTaskId(notification.request.content.data, foregroundAccount) !== null,
     shouldShowList: notificationTaskId(notification.request.content.data, foregroundAccount) !== null,
@@ -22,7 +22,8 @@ export async function registerForPushNotificationsAsync(askPermission = true):
   if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
     return null;
   }
-  if (Platform.OS === 'android' && Constants.executionEnvironment === 'storeClient') {
+  const Notifications = getNativeNotifications();
+  if (!Notifications) {
     throw new Error('Task push notifications require the updated APK or a development build.');
   }
 

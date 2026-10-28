@@ -9,7 +9,7 @@ import { api, onSessionExpired, resetApiSession } from '../services/api';
 import { secureStorage } from '../storage/secureStorage';
 import { validateSessionUser } from '../services/employeeScope';
 import { AppState } from 'react-native';
-import * as Notifications from 'expo-notifications';
+import { getNativeNotifications } from '../services/nativeNotifications';
 import { createNotificationRegistration } from '../services/notificationRegistration';
 import { setNotificationAccount } from '../services/notifications';
 
@@ -53,8 +53,8 @@ export const AuthProvider: React.FC<{
     const foreground = AppState.addEventListener('change', state => {
       if (state === 'active') void deviceSession.sync();
     });
-    const rotation = Notifications.addPushTokenListener(() => { void deviceSession.sync(); });
-    return () => { deviceSession.stop(); foreground.remove(); rotation.remove(); };
+    const rotation = getNativeNotifications()?.addPushTokenListener(() => { void deviceSession.sync(); });
+    return () => { deviceSession.stop(); foreground.remove(); rotation?.remove(); };
   }, [deviceSession, user]);
 
   useEffect(() => onSessionExpired(() => {
@@ -177,7 +177,7 @@ export const AuthProvider: React.FC<{
     resetApiSession();
     deviceSession.stop();
     setNotificationAccount(null);
-    void Notifications.dismissAllNotificationsAsync().catch(() => {});
+    void getNativeNotifications()?.dismissAllNotificationsAsync().catch(() => {});
     try {
       // Backend refresh token revoke cheyyadaniki.
       // Backend logout endpoint available ayithe use avuthundi.

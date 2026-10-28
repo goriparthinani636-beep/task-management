@@ -108,9 +108,40 @@ test('native registration configures Android channel before permission and uses 
     requestPermissionsAsync: async () => ({ status: 'granted' }),
     getExpoPushTokenAsync: async options => { assert.equal(options.projectId, 'eas-project'); return { data: 'ExpoPushToken[test]' }; },
   };
-  const service = load('src/services/notifications.ts', { 'expo-notifications': notifications,
+  const service = load('src/services/notifications.ts', { './nativeNotifications': { getNativeNotifications: () => notifications },
     'expo-constants': { __esModule: true, default: { executionEnvironment: 'standalone', expoConfig: { extra: { eas: { projectId: 'eas-project' } } } } },
     'react-native': { Platform: { OS: 'android' } }, './notificationTarget': target });
   assert.equal(await service.registerForPushNotificationsAsync(), 'ExpoPushToken[test]');
   assert.equal(calls[1][0], 'channel'); assert.equal(calls[2][0], 'permission');
+});
+
+
+test('Expo Go never imports the unavailable native notifications package', () => {
+  let imports = 0;
+  const service = load('src/services/nativeNotifications.ts', {
+    'expo-constants': { __esModule: true, default: { executionEnvironment: 'storeClient' } },
+    'react-native': { Platform: { OS: 'android' } },
+    get 'expo-notifications'() { imports++; throw Error('Cannot find native module'); },
+  });
+  assert.equal(service.getNativeNotifications(), null);
+  assert.equal(imports, 0);
+});
+
+test('an older APK with a missing native module can still load the app', () => {
+  const service = load('src/services/nativeNotifications.ts', {
+    'expo-constants': { __esModule: true, default: { executionEnvironment: 'standalone' } },
+    'react-native': { Platform: { OS: 'android' } },
+    get 'expo-notifications'() { throw Error('Cannot find native module ExpoTopicSubscriptionModule'); },
+  });
+  assert.equal(service.getNativeNotifications(), null);
+});
+
+test('notification registration reports an unsupported runtime without breaking imports', async () => {
+  const service = load('src/services/notifications.ts', {
+    './nativeNotifications': { getNativeNotifications: () => null },
+    'expo-constants': { __esModule: true, default: {} },
+    'react-native': { Platform: { OS: 'android' } },
+    './notificationTarget': load('src/services/notificationTarget.ts'),
+  });
+  await assert.rejects(service.registerForPushNotificationsAsync(), /updated APK/);
 });

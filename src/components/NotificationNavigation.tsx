@@ -1,6 +1,7 @@
 import { useContext, useEffect, useRef } from 'react';
 import { useRootNavigationState, useRouter } from 'expo-router';
-import * as Notifications from 'expo-notifications';
+import type * as Notifications from 'expo-notifications';
+import { getNativeNotifications } from '../services/nativeNotifications';
 import { AuthContext } from '../context/AuthContext';
 import { notificationTaskId } from '../services/notificationTarget';
 
@@ -11,6 +12,8 @@ export function NotificationNavigation() {
   const handled = useRef(new Set<string>());
   useEffect(() => {
     if (!navigation?.key || !user) return;
+    const nativeNotifications = getNativeNotifications();
+    if (!nativeNotifications) return;
     const handle = (response: Notifications.NotificationResponse) => {
       const id = response.notification.request.identifier;
       if (handled.current.has(id)) return;
@@ -18,11 +21,11 @@ export function NotificationNavigation() {
       handled.current.add(id);
       if (handled.current.size > 100) handled.current.delete(handled.current.values().next().value!);
       if (taskId !== null) router.push({ pathname: '/(tabs)/tasks', params: { taskId: String(taskId) } });
-      void Notifications.clearLastNotificationResponseAsync().catch(() => {});
+      void nativeNotifications.clearLastNotificationResponseAsync().catch(() => {});
     };
     let mounted = true;
-    const subscription = Notifications.addNotificationResponseReceivedListener(handle);
-    void Notifications.getLastNotificationResponseAsync().then(response => {
+    const subscription = nativeNotifications.addNotificationResponseReceivedListener(handle);
+    void nativeNotifications.getLastNotificationResponseAsync().then(response => {
       if (mounted && response) handle(response);
     }).catch(() => {});
     return () => { mounted = false; subscription.remove(); };
