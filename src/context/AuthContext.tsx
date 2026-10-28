@@ -5,9 +5,13 @@ import React, {
   useState,
 } from 'react';
 
-import { api, onSessionExpired } from '../services/api';
+import { api, onSessionExpired, resetApiSession } from '../services/api';
 import { secureStorage } from '../storage/secureStorage';
 import { validateSessionUser } from '../services/employeeScope';
+import { AppState } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import { createNotificationRegistration } from '../services/notificationRegistration';
+import { setNotificationAccount } from '../services/notifications';
 
 interface User {
   id: number;
@@ -24,6 +28,8 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, pass: string, role: 'Manager' | 'Employee') => Promise<void>;
   logout: () => Promise<void>;
+  notificationStatus: string;
+  retryNotifications: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>(
@@ -36,11 +42,27 @@ export const AuthProvider: React.FC<{
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [notificationStatus, setNotificationStatus] = useState('Sign in to enable task notifications.');
+  const [deviceSession] = useState(() => createNotificationRegistration(setNotificationStatus));
+
+  useEffect(() => {
+    setNotificationAccount(user);
+    if (!user) { deviceSession.stop(); return; }
+    deviceSession.activate(user.id);
+    void deviceSession.sync(true);
+    const foreground = AppState.addEventListener('change', state => {
+      if (state === 'active') void deviceSession.sync();
+    });
+    const rotation = Notifications.addPushTokenListener(() => { void deviceSession.sync(); });
+    return () => { deviceSession.stop(); foreground.remove(); rotation.remove(); };
+  }, [deviceSession, user]);
 
   useEffect(() => onSessionExpired(() => {
+    deviceSession.stop();
+    setNotificationAccount(null);
     setToken(null);
     setUser(null);
-  }), []);
+  }), [deviceSession]);
 
   // App start/reopen ayinappudu session restore cheyyadam.
   useEffect(() => {
@@ -106,6 +128,7 @@ export const AuthProvider: React.FC<{
     pass: string,
     role: 'Manager' | 'Employee'
   ): Promise<void> => {
+    resetApiSession();
     try {
       const response = await api.post('/auth/login', {
         email: email.trim(),
@@ -151,6 +174,10 @@ export const AuthProvider: React.FC<{
   };
 
   const logout = async (): Promise<void> => {
+    resetApiSession();
+    deviceSession.stop();
+    setNotificationAccount(null);
+    void Notifications.dismissAllNotificationsAsync().catch(() => {});
     try {
       // Backend refresh token revoke cheyyadaniki.
       // Backend logout endpoint available ayithe use avuthundi.
@@ -165,6 +192,7 @@ export const AuthProvider: React.FC<{
       await secureStorage.clearTokens();
       setToken(null);
       setUser(null);
+      setNotificationStatus('Sign in to enable task notifications.');
     }
   };
 
@@ -176,6 +204,8 @@ export const AuthProvider: React.FC<{
         isLoading,
         login,
         logout,
+        notificationStatus,
+        retryNotifications: () => deviceSession.sync(true),
       }}
     >
       {children}

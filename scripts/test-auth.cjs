@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const ts = require('typescript');
 const axios = require('axios');
 
-function setup(refreshStatus = 200) {
+function setup(refreshStatus = 200, refreshGate) {
   let accessToken = 'old-access';
   let refreshToken = 'old-refresh';
   let refreshCalls = 0;
@@ -42,11 +42,13 @@ function setup(refreshStatus = 200) {
   clients[1].defaults.adapter = async config => {
     refreshCalls++;
     await new Promise(resolve => setTimeout(resolve, 5));
+    if (refreshGate) await refreshGate;
     if (refreshStatus !== 200) return reject(config, refreshStatus);
     return { config, status: 200, data: { accessToken: 'new-access', refreshToken: 'new-refresh' }, headers: {}, statusText: 'OK' };
   };
   exports.onSessionExpired(() => { expired++; });
-  return { api: exports.api, state: () => ({ accessToken, refreshToken, refreshCalls, expired }) };
+  return { api: exports.api, reset: exports.resetApiSession, replaceTokens: storage.saveTokens,
+    state: () => ({ accessToken, refreshToken, refreshCalls, expired }) };
 }
 
 test('concurrent unauthorized requests share a refresh and retry with the new token', async () => {
@@ -76,4 +78,31 @@ test('login does not send a stale bearer token', async () => {
   const { api, state } = setup();
   await api.post('/auth/login', { email: 'test@example.com', password: 'test-only' });
   assert.equal(state().refreshCalls, 0);
+});
+
+test('an old refresh completing after account change cannot overwrite new login tokens', async () => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const { api, reset, replaceTokens, state } = setup(200, gate);
+  const request = api.get('/auth/me');
+  const rejected = assert.rejects(request, /account changed/);
+  while (state().refreshCalls === 0) await new Promise(resolve => setTimeout(resolve, 1));
+  reset();
+  await replaceTokens('different-user-access', 'different-user-refresh');
+  release(); await rejected;
+  assert.equal(state().accessToken, 'different-user-access');
+  assert.equal(state().refreshToken, 'different-user-refresh');
+  assert.equal(state().expired, 0);
+});
+
+test('an old rejected refresh cannot clear a newly signed-in account', async () => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const { api, reset, replaceTokens, state } = setup(401, gate);
+  const rejected = assert.rejects(api.get('/auth/me'));
+  while (state().refreshCalls === 0) await new Promise(resolve => setTimeout(resolve, 1));
+  reset(); await replaceTokens('different-user-access', 'different-user-refresh');
+  release(); await rejected;
+  assert.equal(state().accessToken, 'different-user-access');
+  assert.equal(state().expired, 0);
 });

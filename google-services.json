@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "741804859665",
+    "project_id": "appzon-employee-app-25dab",
+    "storage_bucket": "appzon-employee-app-25dab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741804859665:android:56905cb7e3999dc1fa2cb0",
+        "android_client_info": {
+          "package_name": "com.goriparthivenkat.EmployeeApp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqqmMdzzD62e29rxsoc1SUDxbf5d-M-jU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

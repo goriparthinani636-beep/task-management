@@ -12,7 +12,7 @@ import {
   RefreshControl,
   ScrollView,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { loadMyEmployee, loadScopedTasks } from '../services/employeeScope';
 import { AuthContext } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -44,6 +44,9 @@ const STATUS_FILTERS = ['All', 'Pending', 'InProgress', 'Completed'];
 const PRIORITIES = ['Low', 'Medium', 'High'];
 
 export const TasksScreen = () => {
+  const router = useRouter();
+  const { taskId } = useLocalSearchParams<{ taskId?: string }>();
+  const focusedTaskId = Number.isSafeInteger(Number(taskId)) && Number(taskId) > 0 ? Number(taskId) : null;
   const { user } = useContext(AuthContext);
   const isManager = user?.role === 'Manager';
   const generation = useRef(0);
@@ -89,15 +92,17 @@ export const TasksScreen = () => {
     }
   }, [user]);
   useFocusEffect(useCallback(() => {
+    if (focusedTaskId !== null) setSelectedStatus('All');
     void loadData();
     return () => { generation.current++; };
-  }, [loadData]));
+  }, [loadData, focusedTaskId]));
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     void loadData();
   }, [loadData]);
 
   const filteredTasks = tasks.filter((t) => {
+    if (focusedTaskId !== null) return t.id === focusedTaskId;
     if (selectedStatus === 'All') return true;
     return t.status.toLowerCase() === selectedStatus.toLowerCase();
   });
@@ -123,6 +128,7 @@ export const TasksScreen = () => {
   };
 
   const handleSave = async () => {
+    if (formSubmitting) return;
     if (!title.trim()) {
       Alert.alert('Validation', 'Please provide a task title.');
       return;
@@ -143,11 +149,11 @@ export const TasksScreen = () => {
 
     try {
       if (editingTaskId) {
-        await api.put(`/tasks/${editingTaskId}`, payload);
-        Alert.alert('Success', 'Task updated successfully.');
+        const response = await api.put(`/tasks/${editingTaskId}`, payload);
+        Alert.alert('Task saved', response.data?.notificationWarning ?? 'Task updated successfully.');
       } else {
-        await api.post('/tasks', payload);
-        Alert.alert('Success', 'Task created successfully.');
+        const response = await api.post('/tasks', payload);
+        Alert.alert('Task saved', response.data?.notificationWarning ?? 'Task created successfully.');
       }
       setModalVisible(false);
       loadData();
@@ -222,6 +228,10 @@ export const TasksScreen = () => {
 
   return (
     <View style={styles.container}>
+      {focusedTaskId !== null && <View style={{ padding: 12 }}>
+        <Text>Task opened from notification</Text>
+        <TouchableOpacity onPress={() => router.setParams({ taskId: undefined })}><Text style={{ color: Colors.primary }}>Show all tasks</Text></TouchableOpacity>
+      </View>}
       {/* Top Header Row */}
       <View style={styles.topRow}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>

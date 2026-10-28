@@ -24,7 +24,7 @@ export const ProfileScreen = () => {
     return null;
   }
 
-  const { user, logout } = auth;
+  const { user, logout, notificationStatus, retryNotifications } = auth;
   const currentUser = user;
 
   const handleLogout = () => {
@@ -98,6 +98,11 @@ export const ProfileScreen = () => {
           } catch (error: any) { Alert.alert('Password change failed', error?.response?.data?.message ?? 'Please try again.'); }
           finally { setSaving(false); }
         }} />
+      </View>
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>Task notifications</Text>
+        <Text style={{ marginBottom: 12 }}>{notificationStatus}</Text>
+        <Button title="Enable / retry notifications" onPress={() => { void retryNotifications(); }} />
       </View>
       {/* Logout Action */}
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
