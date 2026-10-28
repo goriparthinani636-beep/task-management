@@ -10,7 +10,14 @@ export default function MainTabs() {
   const { user } = useContext(AuthContext);
   const manager = user?.role === 'Manager';
   return <Tabs key={`${user?.id}:${user?.employeeId}:${user?.role}`} screenOptions={({ route }) => ({ tabBarActiveTintColor: Colors.primary,
-    tabBarInactiveTintColor: Colors.textMuted, tabBarLabelStyle: { fontSize: 10 },
+    tabBarInactiveTintColor: Colors.textMuted,
+    headerStyle: { backgroundColor: Colors.card }, headerTintColor: Colors.textDark,
+    headerTitleStyle: { fontWeight: '700', fontSize: 20 }, headerShadowVisible: false,
+    sceneStyle: { backgroundColor: Colors.background },
+    tabBarStyle: { backgroundColor: Colors.card, borderTopColor: Colors.border, paddingTop: 6 },
+    tabBarActiveBackgroundColor: Colors.primarySoft,
+    tabBarItemStyle: { borderRadius: 12, marginHorizontal: 2 },
+    tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
     tabBarIcon: ({ color, size, focused }) => <TabIcon name={icons[route.name as keyof typeof icons]} color={String(color)} size={size} focused={focused} /> })}>
     <Tabs.Protected guard={manager}>
       <Tabs.Screen name="dashboard" options={{ title: 'Dashboard' }} />

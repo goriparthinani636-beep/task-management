@@ -1,3 +1,4 @@
+import { Layout } from '../theme/layout';
 
 import React, { useContext, useState } from 'react';
 import {
@@ -110,7 +111,7 @@ export const LoginScreen = () => {
       >
         <View style={styles.card}>
           <Text style={styles.brandTitle}>
-            EMPLOYEE MANAGEMENT
+            APPZON TECHNOLOGIES
           </Text>
 
           <Text style={styles.heading}>
@@ -121,12 +122,12 @@ export const LoginScreen = () => {
             Sign in as a manager or employee
           </Text>
 
-          <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+          <View style={styles.roleSelector}>
             {(['Employee', 'Manager'] as const).map(option => <TouchableOpacity key={option}
               accessibilityRole="button" accessibilityState={{ selected: role === option }}
               onPress={() => { setRole(option); setErrorMessage(''); }} disabled={loading}
-              style={{ flex: 1, padding: 14, borderRadius: 8, backgroundColor: role === option ? Colors.primary : '#e2e8f0' }}>
-              <Text style={{ textAlign: 'center', color: role === option ? 'white' : Colors.textDark }}>{option} login</Text>
+              style={[styles.roleOption, role === option && styles.roleSelected]}>
+              <Text style={[styles.roleText, role === option && styles.roleTextSelected]}>{option} login</Text>
             </TouchableOpacity>)}
           </View>
           <Input
@@ -167,6 +168,11 @@ export const LoginScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  roleSelector: { flexDirection: 'row', gap: 8, marginBottom: 24, backgroundColor: Colors.surface, padding: 5, borderRadius: 16, borderWidth: 1, borderColor: Colors.border },
+  roleOption: { flex: 1, minHeight: 48, justifyContent: 'center', padding: 10, borderRadius: 11 },
+  roleSelected: { backgroundColor: Colors.primary },
+  roleText: { textAlign: 'center', color: Colors.textMuted, fontWeight: '600', fontSize: 14 },
+  roleTextSelected: { color: Colors.card },
   keyboardContainer: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -178,11 +184,11 @@ const styles = StyleSheet.create({
     padding: 24,
   },
 
-  card: {
+  card: { ...Layout.card, width: '100%', maxWidth: 460, alignSelf: 'center',
     backgroundColor: Colors.card,
     borderRadius: 16,
     padding: 24,
-    shadowColor: '#000',
+    shadowColor: Colors.textDark,
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 10,
@@ -199,7 +205,7 @@ const styles = StyleSheet.create({
   },
 
   heading: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: '700',
     color: Colors.textDark,
     textAlign: 'center',

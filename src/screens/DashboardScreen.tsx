@@ -1,3 +1,4 @@
+import { Layout } from '../theme/layout';
 //Backend nundi employee statistics teesukoni screen meeda display chestundi.
 import React, { useEffect, useState, useCallback } from 'react';
 //react = component ne create chayadheneke
@@ -97,12 +98,12 @@ export const DashboardScreen = () => {
           <Text style={styles.cardNumber}>{stats?.totalEmployees ?? 0}</Text>
         </View>
 
-        <View style={[styles.card, { borderLeftColor: '#10B981' }]}>
+        <View style={[styles.card, { borderLeftColor: Colors.success }]}>
           <Text style={styles.cardLabel}>Active</Text>
           <Text style={styles.cardNumber}>{stats?.activeEmployees ?? 0}</Text>
         </View>
 
-        <View style={[styles.card, { borderLeftColor: '#EF4444' }]}>
+        <View style={[styles.card, { borderLeftColor: Colors.error }]}>
           <Text style={styles.cardLabel}>Inactive</Text>
           <Text style={styles.cardNumber}>{stats?.inactiveEmployees ?? 0}</Text>
         </View>
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    padding: 16,
+    padding: 20,
   },
   center: {
     flex: 1,
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   heading: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: '700',
     color: Colors.textDark,
     marginBottom: 16,
@@ -151,16 +152,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 24,
   },
-  card: {
+  card: { ...Layout.card,
     flex: 1,
     backgroundColor: Colors.card,
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 12,
-    marginHorizontal: 4,
+    marginHorizontal: 3,
     borderLeftWidth: 4,
     elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
+    shadowColor: Colors.textDark,
+    shadowOpacity: 0.04,
     shadowOffset: { width: 0, height: 2 },
   },
   cardLabel: {
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   cardNumber: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: '700',
     color: Colors.textDark,
     marginTop: 6,
@@ -180,9 +181,9 @@ const styles = StyleSheet.create({
     color: Colors.textDark,
     marginBottom: 12,
   },
-  departmentList: {
+  departmentList: { ...Layout.card,
     backgroundColor: Colors.card,
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 8,
     elevation: 2,
   },
@@ -193,7 +194,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: Colors.surface,
   },
   deptName: {
     fontSize: 15,
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
     color: Colors.textDark,
   },
   badge: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: Colors.primarySoft,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -212,9 +213,9 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   errorContainer: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: Colors.errorSoft,
     padding: 10,
-    borderRadius: 6,
+    borderRadius: 12,
     marginBottom: 12,
   },
   errorText: {

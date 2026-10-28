@@ -1,3 +1,5 @@
+import { Button } from '../components/Button';
+import { Layout } from '../theme/layout';
 import { Link } from 'expo-router';
 import React, { useContext, useState } from 'react';
 import {
@@ -8,8 +10,7 @@ import {
   Alert,
   ScrollView,
   TextInput,
-  Button,
-} from 'react-native';
+  } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import { api } from '../services/api';
 import { Colors } from '../theme/colors';
@@ -46,7 +47,7 @@ export const ProfileScreen = () => {
   const displayName: string = currentUser?.name || emailText.split('@')[0] || 'My account';
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
       {/* Profile Header Card */}
       <View style={styles.profileCard}>
         <View style={styles.avatar}>
@@ -77,7 +78,7 @@ export const ProfileScreen = () => {
 
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Session Status</Text>
-          <Text style={[styles.infoValue, { color: '#16A34A', fontWeight: '700' }]}>
+          <Text style={[styles.infoValue, { color: Colors.success, fontWeight: '700' }]}>
             Active
           </Text>
         </View>
@@ -85,8 +86,8 @@ export const ProfileScreen = () => {
 
       <View style={styles.sectionCard}>
         <Text style={styles.sectionTitle}>Change password</Text>
-        <TextInput placeholder="Current password" accessibilityLabel="Current password" secureTextEntry value={currentPassword} onChangeText={setCurrentPassword} autoCapitalize="none" style={{ padding: 12 }} />
-        <TextInput placeholder="New password (6+ characters)" accessibilityLabel="New password" secureTextEntry value={newPassword} onChangeText={setNewPassword} autoCapitalize="none" style={{ padding: 12 }} />
+        <TextInput placeholder="Current password" accessibilityLabel="Current password" secureTextEntry value={currentPassword} onChangeText={setCurrentPassword} autoCapitalize="none" style={Layout.input} />
+        <TextInput placeholder="New password (6+ characters)" accessibilityLabel="New password" secureTextEntry value={newPassword} onChangeText={setNewPassword} autoCapitalize="none" style={Layout.input} />
         <Button title={saving ? 'Saving…' : 'Change password'} disabled={saving} onPress={async () => {
           if (saving) return;
           setSaving(true);
@@ -101,7 +102,7 @@ export const ProfileScreen = () => {
       </View>
       <View style={styles.sectionCard}>
         <Text style={styles.sectionTitle}>Task notifications</Text>
-        <Text style={{ marginBottom: 12 }}>{notificationStatus}</Text>
+        <Text style={{ marginBottom: 12, color: Colors.textMuted, lineHeight: 22 }}>{notificationStatus}</Text>
         <Button title="Enable / retry notifications" onPress={() => { void retryNotifications(); }} />
       </View>
       {/* Logout Action */}
@@ -116,17 +117,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    padding: 16,
+    padding: 20,
   },
-  profileCard: {
+  profileCard: { ...Layout.card,
     backgroundColor: Colors.card,
-    borderRadius: 12,
+    borderRadius: 18,
     padding: 24,
     alignItems: 'center',
     marginBottom: 16,
     elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
+    shadowColor: Colors.textDark,
+    shadowOpacity: 0.04,
     shadowOffset: { width: 0, height: 2 },
   },
   avatar: {
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   roleBadge: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: Colors.primarySoft,
     paddingHorizontal: 14,
     paddingVertical: 4,
     borderRadius: 16,
@@ -166,10 +167,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  sectionCard: {
+  sectionCard: { ...Layout.card,
     backgroundColor: Colors.card,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 18,
+    padding: 20,
     marginBottom: 24,
     elevation: 2,
   },
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: Colors.surface,
   },
   infoLabel: {
     fontSize: 13,
@@ -196,13 +197,13 @@ const styles = StyleSheet.create({
     color: Colors.textDark,
   },
   logoutBtn: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: Colors.errorSoft,
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
   },
   logoutBtnText: {
-    color: '#DC2626',
+    color: Colors.error,
     fontWeight: '700',
     fontSize: 15,
   },

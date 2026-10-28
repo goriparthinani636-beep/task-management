@@ -8,12 +8,15 @@ interface Props {
   onPress: () => void;
   loading?: boolean;
   disabled?: boolean;
+  color?: string;
 }
 
-export const Button: React.FC<Props> = ({ title, onPress, loading, disabled }) => {
+export const Button: React.FC<Props> = ({ title, onPress, loading, disabled, color }) => {
   return (
     <TouchableOpacity
-      style={[styles.button, disabled || loading ? styles.disabled : null]}
+      style={[styles.button, color ? { backgroundColor: color } : null, disabled || loading ? styles.disabled : null]}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.8}
@@ -29,9 +32,11 @@ export const Button: React.FC<Props> = ({ title, onPress, loading, disabled }) =
 
 const styles = StyleSheet.create({
   button: {
-    height: 48,
+    minHeight: 50,
+    paddingVertical: 13,
+    paddingHorizontal: 18,
     backgroundColor: Colors.primary,
-    borderRadius: 8,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
@@ -43,5 +48,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+    textAlign: 'center',
   },
 });

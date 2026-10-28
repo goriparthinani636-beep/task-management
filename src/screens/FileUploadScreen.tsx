@@ -1,9 +1,11 @@
+import { Button } from '../components/Button';
+import { Layout } from '../theme/layout';
+import { Colors } from '../theme/colors';
 
 import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Button,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -319,7 +321,7 @@ export const FileUploadScreen = () => {
 
                 <Button
                   title="Remove File"
-                  color="red"
+                  color={Colors.error}
                   onPress={() => removeFile(item.id)}
                   disabled={isUploading}
                 />
@@ -340,7 +342,7 @@ export const FileUploadScreen = () => {
       {isLoading ? (
         <ActivityIndicator
           size="large"
-          color="#2563EB"
+          color={Colors.primary}
           style={styles.loader}
         />
       ) : (
@@ -375,7 +377,7 @@ export const FileUploadScreen = () => {
               <View style={styles.openButton}>
                 <Button
                   title={deletingId === item.id ? 'Deleting...' : 'Delete File'}
-                  color="#DC2626"
+                  color={Colors.error}
                   onPress={() => confirmDelete(item)}
                   disabled={deletingId !== null || isUploading || isRefreshing}
                 />
@@ -399,8 +401,8 @@ export const FileUploadScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#FFFFFF',
+    padding: 20,
+    backgroundColor: Colors.card,
   },
   title: {
     fontSize: 24,
@@ -408,7 +410,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   help: {
-    color: '#555555',
+    color: Colors.textMuted,
     marginBottom: 12,
   },
   sectionTitle: {
@@ -426,24 +428,24 @@ const styles = StyleSheet.create({
   },
   empty: {
     marginVertical: 20,
-    color: '#666666',
+    color: Colors.textMuted,
   },
-  fileCard: {
+  fileCard: { ...Layout.card,
     padding: 12,
     marginVertical: 6,
     borderWidth: 1,
-    borderColor: '#DDDDDD',
-    borderRadius: 8,
+    borderColor: Colors.border,
+    borderRadius: 12,
   },
   fileName: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 6,
   },
-  input: {
+  input: { ...Layout.input,
     borderWidth: 1,
-    borderColor: '#BBBBBB',
-    borderRadius: 6,
+    borderColor: Colors.border,
+    borderRadius: 12,
     padding: 10,
     marginVertical: 10,
   },

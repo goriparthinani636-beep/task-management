@@ -1,3 +1,5 @@
+import { Layout } from '../theme/layout';
+import { Colors } from '../theme/colors';
 import React, { useCallback, useContext, useRef, useState } from 'react';
 import { ScrollView, Text, View, StyleSheet, RefreshControl } from 'react-native';
 import { useFocusEffect } from 'expo-router';
@@ -25,15 +27,15 @@ export default function MyDetailsScreen() {
     } finally { if (generation.current === current) setLoading(false); }
   }, [user]);
   useFocusEffect(useCallback(() => { void load(); return () => { generation.current++; }; }, [load]));
-  return <ScrollView style={styles.page} refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}>
+  return <ScrollView style={styles.page} contentContainerStyle={{ paddingBottom: 32 }} refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}>
     <Text style={styles.title}>My details</Text>
     {error ? <Text>{error}</Text> : null}
     {employee && Object.entries({ Name: `${employee.firstName} ${employee.lastName}`, Email: employee.email,
       Phone: employee.phone, Department: employee.department, Designation: employee.designation,
       Status: employee.status, 'Joining date': employee.joiningDate?.slice(0, 10) }).map(([label, value]) =>
-      <View key={label} style={styles.row}><Text>{label}</Text><Text style={styles.value}>{value || '—'}</Text></View>)}
+      <View key={label} style={styles.row}><Text style={styles.label}>{label}</Text><Text style={styles.value}>{value || '—'}</Text></View>)}
   </ScrollView>;
 }
-const styles = StyleSheet.create({ page: { flex: 1, padding: 20, backgroundColor: '#f8fafc' },
+const styles = StyleSheet.create({ page: { flex: 1, padding: 20, backgroundColor: Colors.background },
   title: { fontSize: 24, fontWeight: '700', marginBottom: 20 },
-  row: { padding: 16, backgroundColor: 'white', marginBottom: 8, borderRadius: 8 }, value: { fontWeight: '600', marginTop: 6 } });
+  label: { color: Colors.textMuted, fontSize: 13 }, row: { ...Layout.card, padding: 20, backgroundColor: 'white', marginBottom: 12, borderRadius: 18 }, value: { fontWeight: '600', fontSize: 16, lineHeight: 24, color: Colors.textDark, marginTop: 6 } });

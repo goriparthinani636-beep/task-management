@@ -1,3 +1,4 @@
+import { Layout } from '../theme/layout';
 import React, { useMemo, useRef, useState, useCallback } from 'react';
 import { useFocusEffect } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
@@ -393,8 +394,8 @@ export const EmployeesScreen = () => {
                   {
                     backgroundColor:
                       item.status?.toLowerCase() === 'active'
-                        ? '#DCFCE7'
-                        : '#FEE2E2',
+                        ? Colors.successSoft
+                        : Colors.errorSoft,
                   },
                 ]}
               >
@@ -404,8 +405,8 @@ export const EmployeesScreen = () => {
                     {
                       color:
                         item.status?.toLowerCase() === 'active'
-                          ? '#16A34A'
-                          : '#DC2626',
+                          ? Colors.success
+                          : Colors.error,
                     },
                   ]}
                 >
@@ -739,7 +740,7 @@ export const EmployeesScreen = () => {
                       disabled={removingResume}
                       onPress={() => confirmRemoveResume(profileEmployee)}
                     >
-                      <Text style={[styles.resumeEditBtnText, { color: '#DC2626' }]}>
+                      <Text style={[styles.resumeEditBtnText, { color: Colors.error }]}>
                         {removingResume ? 'Removing...' : 'Remove Resume'}
                       </Text>
                     </TouchableOpacity>
@@ -804,7 +805,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    padding: 16,
+    padding: 20,
   },
   center: {
     flex: 1,
@@ -815,36 +816,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 12,
   },
-  searchInput: {
+  searchInput: { ...Layout.input,
     flex: 1,
     backgroundColor: Colors.card,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 12,
     height: 44,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.border,
     color: Colors.textDark,
   },
-  addBtn: {
+  addBtn: { minHeight: 44, justifyContent: 'center',
     backgroundColor: Colors.primary,
     marginLeft: 8,
     paddingHorizontal: 16,
-    borderRadius: 8,
-    justifyContent: 'center',
+    borderRadius: 12,
     alignItems: 'center',
   },
   addBtnText: {
     color: '#fff',
     fontWeight: '700',
   },
-  card: {
+  card: { ...Layout.card,
     backgroundColor: Colors.card,
-    borderRadius: 10,
+    borderRadius: 18,
     padding: 14,
     marginBottom: 10,
     elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
+    shadowColor: Colors.textDark,
+    shadowOpacity: 0.04,
     shadowOffset: { width: 0, height: 2 },
   },
   cardHeader: {
@@ -855,7 +855,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#EEF9FF',
+    backgroundColor: Colors.primarySoft,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -895,7 +895,7 @@ const styles = StyleSheet.create({
   contactRow: {
     marginTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
+    borderTopColor: Colors.surface,
     paddingTop: 8,
   },
   contactText: {
@@ -903,28 +903,28 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginTop: 2,
   },
-  actionRow: {
+  actionRow: { flexWrap: 'wrap', rowGap: 8,
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: 10,
   },
-  profileBtn: {
-    backgroundColor: '#E0F2FE',
+  profileBtn: { minHeight: 44, justifyContent: 'center',
+    backgroundColor: Colors.accentSoft,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 6,
+    borderRadius: 12,
     marginRight: 8,
   },
   profileBtnText: {
-    color: '#0369A1',
+    color: Colors.accent,
     fontWeight: '600',
     fontSize: 12,
   },
-  editBtn: {
-    backgroundColor: '#EEF2FF',
+  editBtn: { minHeight: 44, justifyContent: 'center',
+    backgroundColor: Colors.primarySoft,
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 6,
+    borderRadius: 12,
     marginRight: 8,
   },
   editBtnText: {
@@ -932,14 +932,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 12,
   },
-  deleteBtn: {
-    backgroundColor: '#FEE2E2',
+  deleteBtn: { minHeight: 44, justifyContent: 'center',
+    backgroundColor: Colors.errorSoft,
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 6,
+    borderRadius: 12,
   },
   deleteBtnText: {
-    color: '#DC2626',
+    color: Colors.error,
     fontWeight: '600',
     fontSize: 12,
   },
@@ -957,15 +957,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
-  modalContent: {
+  modalContent: { ...Layout.card, width: '100%', maxWidth: 560, alignSelf: 'center',
     backgroundColor: Colors.card,
-    borderRadius: 12,
+    borderRadius: 18,
     padding: 20,
     maxHeight: '90%',
   },
-  profileModalContent: {
+  profileModalContent: { ...Layout.card, width: '100%', maxWidth: 560, alignSelf: 'center',
     backgroundColor: Colors.card,
-    borderRadius: 14,
+    borderRadius: 18,
     padding: 20,
     maxHeight: '92%',
   },
@@ -982,10 +982,10 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 4,
   },
-  input: {
+  input: { ...Layout.input,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 6,
+    borderColor: Colors.border,
+    borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 9,
     fontSize: 14,
@@ -1003,13 +1003,13 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 16,
   },
-  statusToggleBtn: {
+  statusToggleBtn: { minHeight: 44, justifyContent: 'center',
     flex: 1,
     paddingVertical: 8,
     alignItems: 'center',
-    borderRadius: 6,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.border,
     marginRight: 8,
   },
   statusToggleBtnActive: {
@@ -1028,20 +1028,20 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginTop: 10,
     padding: 10,
-    borderRadius: 6,
-    backgroundColor: '#E0F2FE',
+    borderRadius: 12,
+    backgroundColor: Colors.accentSoft,
   },
   previewBtnText: {
-    color: '#0369A1',
+    color: Colors.accent,
     fontWeight: '600',
   },
-  modalActions: {
+  modalActions: { flexWrap: 'wrap', rowGap: 8,
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: 16,
     marginBottom: 8,
   },
-  cancelBtn: {
+  cancelBtn: { minHeight: 44, justifyContent: 'center',
     paddingVertical: 10,
     paddingHorizontal: 16,
     marginRight: 8,
@@ -1050,11 +1050,11 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontWeight: '600',
   },
-  saveBtn: {
+  saveBtn: { minHeight: 44, justifyContent: 'center',
     backgroundColor: Colors.primary,
     paddingVertical: 10,
     paddingHorizontal: 18,
-    borderRadius: 6,
+    borderRadius: 12,
   },
   saveBtnText: {
     color: '#fff',
@@ -1064,13 +1064,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: Colors.border,
   },
   avatarLarge: {
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: '#E0F2FE',
+    backgroundColor: Colors.accentSoft,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -1081,7 +1081,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   profileName: {
-    fontSize: 22,
+    fontSize: 26,
     fontWeight: '700',
     color: Colors.textDark,
     textAlign: 'center',
@@ -1097,8 +1097,8 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   infoBox: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 10,
+    backgroundColor: Colors.surface,
+    borderRadius: 18,
     padding: 14,
   },
   infoLabel: {
@@ -1113,15 +1113,15 @@ const styles = StyleSheet.create({
   },
   infoDivider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: Colors.border,
     marginVertical: 10,
   },
-  resumeCard: {
-    backgroundColor: '#F9FAFB',
+  resumeCard: { ...Layout.card,
+    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 10,
-    padding: 16,
+    borderColor: Colors.border,
+    borderRadius: 18,
+    padding: 20,
     alignItems: 'center',
   },
   resumeIcon: {
@@ -1143,7 +1143,7 @@ const styles = StyleSheet.create({
   },
   resumeOpenBtn: {
     backgroundColor: Colors.primary,
-    borderRadius: 7,
+    borderRadius: 12,
     paddingVertical: 11,
     paddingHorizontal: 16,
     alignItems: 'center',
@@ -1168,9 +1168,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   editProfileBtn: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: Colors.primarySoft,
     padding: 12,
-    borderRadius: 7,
+    borderRadius: 12,
     alignItems: 'center',
   },
   editProfileBtnText: {
@@ -1179,9 +1179,9 @@ const styles = StyleSheet.create({
   },
   closeProfileBtn: {
     padding: 12,
-    borderRadius: 7,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.border,
     alignItems: 'center',
   },
   closeProfileBtnText: {

@@ -1,3 +1,4 @@
+import { Layout } from '../theme/layout';
 import React, { useState, useCallback, useContext, useRef } from 'react';
 import {
   View,
@@ -199,22 +200,22 @@ export const TasksScreen = () => {
   const getPriorityColor = (p: string) => {
     switch (p.toLowerCase()) {
       case 'high':
-        return '#EF4444';
+        return Colors.error;
       case 'medium':
-        return '#F59E0B';
+        return Colors.warning;
       default:
-        return '#10B981';
+        return Colors.success;
     }
   };
 
   const getStatusColor = (s: string) => {
     switch (s.toLowerCase()) {
       case 'completed':
-        return { bg: '#DCFCE7', text: '#16A34A' };
+        return { bg: Colors.successSoft, text: Colors.success };
       case 'inprogress':
-        return { bg: '#FEF3C7', text: '#D97706' };
+        return { bg: Colors.warningSoft, text: Colors.warning };
       default:
-        return { bg: '#F3F4F6', text: '#4B5563' };
+        return { bg: Colors.surface, text: '#4B5563' };
     }
   };
 
@@ -420,62 +421,62 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   topRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   filterScroll: { flex: 1 },
-  filterChip: {
+  filterChip: { minHeight: 44, justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
     backgroundColor: Colors.card,
     marginRight: 6,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.border,
   },
   filterChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   filterChipText: { fontSize: 12, color: Colors.textMuted, fontWeight: '600' },
   filterChipTextActive: { color: '#fff' },
-  addBtn: {
+  addBtn: { minHeight: 44, justifyContent: 'center',
     backgroundColor: Colors.primary,
     marginLeft: 8,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   addBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  card: {
+  card: { ...Layout.card,
     backgroundColor: Colors.card,
-    borderRadius: 10,
+    borderRadius: 18,
     padding: 14,
     marginBottom: 10,
     elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
+    shadowColor: Colors.textDark,
+    shadowOpacity: 0.04,
     shadowOffset: { width: 0, height: 2 },
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   priorityTag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
-  priorityText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  priorityText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 },
   statusText: { fontSize: 11, fontWeight: '700' },
   title: { fontSize: 16, fontWeight: '700', color: Colors.textDark, marginTop: 8 },
-  description: { fontSize: 13, color: Colors.textMuted, marginTop: 4 },
+  description: { lineHeight: 21, fontSize: 14, color: Colors.textMuted, marginTop: 4 },
   assigneeRow: { flexDirection: 'row', marginTop: 10, alignItems: 'center' },
   assigneeLabel: { fontSize: 12, color: Colors.textMuted },
   assigneeName: { fontSize: 12, fontWeight: '600', color: Colors.textDark, marginLeft: 4 },
-  actionRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 },
-  editBtn: {
-    backgroundColor: '#EEF2FF',
+  actionRow: { flexWrap: 'wrap', rowGap: 8, flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 },
+  editBtn: { minHeight: 44, justifyContent: 'center',
+    backgroundColor: Colors.primarySoft,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 12,
     marginRight: 8,
   },
   editBtnText: { color: Colors.primary, fontWeight: '600', fontSize: 12 },
-  deleteBtn: {
-    backgroundColor: '#FEE2E2',
+  deleteBtn: { minHeight: 44, justifyContent: 'center',
+    backgroundColor: Colors.errorSoft,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 12,
   },
-  deleteBtnText: { color: '#DC2626', fontWeight: '600', fontSize: 12 },
+  deleteBtnText: { color: Colors.error, fontWeight: '600', fontSize: 12 },
   emptyContainer: { padding: 40, alignItems: 'center' },
   emptyText: { color: Colors.textMuted, fontSize: 14 },
   modalOverlay: {
@@ -484,18 +485,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
-  modalContent: {
+  modalContent: { ...Layout.card, width: '100%', maxWidth: 560, alignSelf: 'center',
     backgroundColor: Colors.card,
-    borderRadius: 12,
+    borderRadius: 18,
     padding: 20,
     maxHeight: '90%',
   },
   modalTitle: { fontSize: 18, fontWeight: '700', color: Colors.textDark, marginBottom: 14 },
   label: { fontSize: 12, fontWeight: '600', color: Colors.textDark, marginTop: 10, marginBottom: 4 },
-  input: {
+  input: { ...Layout.input,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 6,
+    borderColor: Colors.border,
+    borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 8,
     fontSize: 14,
@@ -503,39 +504,39 @@ const styles = StyleSheet.create({
   },
   multilineInput: { height: 70, textAlignVertical: 'top' },
   selectScroll: { flexDirection: 'row', marginBottom: 4 },
-  empSelectChip: {
+  empSelectChip: { minHeight: 44, justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.border,
     marginRight: 6,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Colors.surface,
   },
   empSelectChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   empSelectText: { fontSize: 12, color: Colors.textDark },
   empSelectTextActive: { color: '#fff', fontWeight: '600' },
   rowChoices: { flexDirection: 'row', marginTop: 4 },
-  choiceBtn: {
+  choiceBtn: { minHeight: 44, justifyContent: 'center',
     flex: 1,
     paddingVertical: 6,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 6,
+    borderColor: Colors.border,
+    borderRadius: 12,
     marginRight: 6,
   },
   choiceBtnActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   choiceText: { fontSize: 12, color: Colors.textDark, fontWeight: '600' },
   choiceTextActive: { color: '#fff' },
-  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16 },
-  cancelBtn: { paddingVertical: 10, paddingHorizontal: 16, marginRight: 8 },
+  modalActions: { flexWrap: 'wrap', rowGap: 8, flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16 },
+  cancelBtn: { minHeight: 44, justifyContent: 'center', paddingVertical: 10, paddingHorizontal: 16, marginRight: 8 },
   cancelBtnText: { color: Colors.textMuted, fontWeight: '600' },
-  saveBtn: {
+  saveBtn: { minHeight: 44, justifyContent: 'center',
     backgroundColor: Colors.primary,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 6,
+    borderRadius: 12,
   },
   saveBtnText: { color: '#fff', fontWeight: '700' },
 });

@@ -1,3 +1,5 @@
+import { Layout } from '../theme/layout';
+import { Colors } from '../theme/colors';
 
 import React, { useRef, useState, useCallback, useContext } from 'react';
 import {
@@ -348,34 +350,34 @@ export default function AttendanceScreen() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: Colors.background,
     padding: 20,
   },
   title: {
     fontSize: 26,
     fontWeight: '700',
-    color: '#0f172a',
+    color: Colors.textDark,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#64748b',
+    color: Colors.textMuted,
     marginBottom: 24,
   },
-  infoCard: {
-    backgroundColor: '#ffffff',
+  infoCard: { ...Layout.card,
+    backgroundColor: Colors.card,
     padding: 20,
     borderRadius: 14,
     marginBottom: 24,
     elevation: 2,
   },
   infoLabel: {
-    color: '#64748b',
+    color: Colors.textMuted,
     fontSize: 13,
     marginTop: 8,
   },
   infoValue: {
-    color: '#0f172a',
+    color: Colors.textDark,
     fontSize: 20,
     fontWeight: '700',
     marginTop: 4,
@@ -385,10 +387,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   allowed: {
-    color: '#15803d',
+    color: Colors.success,
   },
   denied: {
-    color: '#b91c1c',
+    color: Colors.error,
   },
   previewContainer: {
     alignItems: 'center',
@@ -401,22 +403,22 @@ const styles = StyleSheet.create({
   },
   previewLabel: {
     marginTop: 8,
-    color: '#15803d',
+    color: Colors.success,
     fontWeight: '600',
   },
   primaryButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: Colors.primary,
     paddingVertical: 15,
     paddingHorizontal: 18,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 10,
   },
   submitButton: {
-    backgroundColor: '#15803d',
+    backgroundColor: Colors.success,
     paddingVertical: 15,
     paddingHorizontal: 18,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 12,
   },
@@ -424,11 +426,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#475569',
     paddingVertical: 15,
     paddingHorizontal: 18,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
   },
   buttonText: {
-    color: '#ffffff',
+    color: Colors.card,
     fontWeight: '700',
     fontSize: 15,
   },

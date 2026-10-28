@@ -1,5 +1,8 @@
+import { Button } from '../components/Button';
+import { Layout } from '../theme/layout';
+import { Colors } from '../theme/colors';
 import React, { useCallback, useState } from 'react';
-import { ScrollView, View, Text, TextInput, Button, Alert, Switch, StyleSheet } from 'react-native';
+import { ScrollView, View, Text, TextInput, Alert, Switch, StyleSheet } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { api } from '../services/api';
 
@@ -50,6 +53,6 @@ export default function AccountsScreen() {
     </View>)}
   </ScrollView>;
 }
-const styles = StyleSheet.create({ page: { padding: 20, gap: 12 }, title: { fontSize: 22, fontWeight: '700', marginTop: 12 },
-  label: { marginBottom: 6 }, input: { backgroundColor: 'white', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 12 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, card: { padding: 12, backgroundColor: 'white', borderRadius: 8 } });
+const styles = StyleSheet.create({ page: { padding: 20, paddingBottom: 40, gap: 14, backgroundColor: Colors.background }, title: { fontSize: 26, fontWeight: '700', marginTop: 12 },
+  label: { marginBottom: 8, fontSize: 13, fontWeight: '600', color: Colors.textDark }, input: { ...Layout.input, backgroundColor: 'white', borderWidth: 1, borderColor: Colors.border, borderRadius: 12, padding: 12 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center', justifyContent: 'space-between' }, card: { ...Layout.card, padding: 18, gap: 8 } });
