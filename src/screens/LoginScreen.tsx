@@ -26,12 +26,14 @@ export const LoginScreen = () => {
   const { login } = auth;
 
   const [role, setRole] = useState<'Manager' | 'Employee'>('Employee');
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleLogin = async (): Promise<void> => {
+    setRoleMenuOpen(false);
     setErrorMessage('');
 
     if (!email.trim() || !password) {
@@ -123,12 +125,26 @@ export const LoginScreen = () => {
           </Text>
 
           <View style={styles.roleSelector}>
-            {(['Employee', 'Manager'] as const).map(option => <TouchableOpacity key={option}
-              accessibilityRole="button" accessibilityState={{ selected: role === option }}
-              onPress={() => { setRole(option); setErrorMessage(''); }} disabled={loading}
-              style={[styles.roleOption, role === option && styles.roleSelected]}>
-              <Text style={[styles.roleText, role === option && styles.roleTextSelected]}>{option} login</Text>
-            </TouchableOpacity>)}
+            <Text style={styles.roleLabel}>Login as</Text>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={`Login as ${role}`}
+              accessibilityHint="Opens employee and manager login options"
+              accessibilityState={{ expanded: roleMenuOpen, disabled: loading }}
+              onPress={() => setRoleMenuOpen(open => !open)} disabled={loading}
+              style={[styles.roleDropdown, roleMenuOpen && styles.roleDropdownOpen]}>
+              <Text style={styles.roleText}>{role} login</Text>
+              <Text style={styles.roleArrow} accessible={false}>{roleMenuOpen ? '▴' : '▾'}</Text>
+            </TouchableOpacity>
+            {roleMenuOpen && <View style={styles.roleMenu}>
+              {(['Employee', 'Manager'] as const).map(option => <TouchableOpacity key={option}
+                accessibilityRole="radio" accessibilityState={{ checked: role === option }}
+                onPress={() => { setRole(option); setRoleMenuOpen(false); setErrorMessage(''); }}
+                style={[styles.roleOption, role === option && styles.roleSelected]}>
+                <Text style={[styles.roleText, role === option && styles.roleTextSelected]}>{option} login</Text>
+                {role === option && <Text style={styles.roleCheck} accessible={false}>✓</Text>}
+              </TouchableOpacity>)}
+            </View>}
           </View>
           <Input
             label="Email"
@@ -168,11 +184,17 @@ export const LoginScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  roleSelector: { flexDirection: 'row', gap: 8, marginBottom: 24, backgroundColor: Colors.surface, padding: 5, borderRadius: 16, borderWidth: 1, borderColor: Colors.border },
-  roleOption: { flex: 1, minHeight: 48, justifyContent: 'center', padding: 10, borderRadius: 11 },
-  roleSelected: { backgroundColor: Colors.primary },
-  roleText: { textAlign: 'center', color: Colors.textMuted, fontWeight: '600', fontSize: 14 },
-  roleTextSelected: { color: Colors.card },
+  roleSelector: { marginBottom: 20 },
+  roleLabel: { fontSize: 14, fontWeight: '600', color: Colors.textDark, marginBottom: 6 },
+  roleDropdown: { ...Layout.input, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  roleDropdownOpen: { borderColor: Colors.primary },
+  roleArrow: { color: Colors.primary, fontSize: 20 },
+  roleMenu: { ...Layout.card, marginTop: 6, padding: 4, borderRadius: 12 },
+  roleOption: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderRadius: 8 },
+  roleSelected: { backgroundColor: Colors.primarySoft },
+  roleText: { color: Colors.textDark, fontWeight: '600', fontSize: 15 },
+  roleTextSelected: { color: Colors.primary },
+  roleCheck: { color: Colors.primary, fontSize: 18, fontWeight: '700' },
   keyboardContainer: {
     flex: 1,
     backgroundColor: Colors.background,
