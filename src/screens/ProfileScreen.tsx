@@ -1,7 +1,7 @@
 import { Button } from '../components/Button';
 import { Layout } from '../theme/layout';
 import { Link } from 'expo-router';
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,8 @@ import {
   Alert,
   ScrollView,
   TextInput,
-  } from 'react-native';
-import { AuthContext } from '../context/AuthContext';
+} from 'react-native';
+import { useAuth } from '../store/useAuth';
 import { api } from '../services/api';
 import { Colors } from '../theme/colors';
 
@@ -19,11 +19,7 @@ export const ProfileScreen = () => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [saving, setSaving] = useState(false);
-  const auth = useContext(AuthContext);
-
-  if (!auth) {
-    return null;
-  }
+  const auth = useAuth();
 
   const { user, logout, notificationStatus, retryNotifications } = auth;
   const currentUser = user;

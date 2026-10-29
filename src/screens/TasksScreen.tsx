@@ -1,5 +1,5 @@
 import { Layout } from '../theme/layout';
-import React, { useState, useCallback, useContext, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,8 @@ import {
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { loadMyEmployee, loadScopedTasks } from '../services/employeeScope';
-import { AuthContext } from '../context/AuthContext';
+import { useAppSelector } from '../store/hooks';
+import { selectCurrentUser } from '../store/authSlice';
 import { api } from '../services/api';
 import { Colors } from '../theme/colors';
 
@@ -48,7 +49,7 @@ export const TasksScreen = () => {
   const router = useRouter();
   const { taskId } = useLocalSearchParams<{ taskId?: string }>();
   const focusedTaskId = Number.isSafeInteger(Number(taskId)) && Number(taskId) > 0 ? Number(taskId) : null;
-  const { user } = useContext(AuthContext);
+  const user = useAppSelector(selectCurrentUser);
   const isManager = user?.role === 'Manager';
   const generation = useRef(0);
   const [loadError, setLoadError] = useState('');

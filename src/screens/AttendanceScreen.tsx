@@ -1,7 +1,7 @@
 import { Layout } from '../theme/layout';
 import { Colors } from '../theme/colors';
 
-import React, { useRef, useState, useCallback, useContext } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,7 +14,8 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useFocusEffect } from 'expo-router';
-import { AuthContext } from '../context/AuthContext';
+import { useAppSelector } from '../store/hooks';
+import { selectCurrentUser } from '../store/authSlice';
 import { api } from '../services/api';
 import { AttendanceError, getAttendanceOffice, getAttendanceLocation, type Office } from '../services/attendanceLocation';
 
@@ -51,7 +52,7 @@ function getDistanceInMeters(
 }
 
 export default function AttendanceScreen() {
-  const { user } = useContext(AuthContext);
+  const user = useAppSelector(selectCurrentUser);
   const isManager = user?.role === 'Manager';
   const [office, setOffice] = useState<Office | null>(null);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);

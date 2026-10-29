@@ -1,12 +1,13 @@
-import { useContext, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRootNavigationState, useRouter } from 'expo-router';
 import type * as Notifications from 'expo-notifications';
 import { getNativeNotifications } from '../services/nativeNotifications';
-import { AuthContext } from '../context/AuthContext';
+import { useAppSelector } from '../store/hooks';
+import { selectCurrentUser } from '../store/authSlice';
 import { notificationTaskId } from '../services/notificationTarget';
 
 export function NotificationNavigation() {
-  const { user } = useContext(AuthContext);
+  const user = useAppSelector(selectCurrentUser);
   const router = useRouter();
   const navigation = useRootNavigationState();
   const handled = useRef(new Set<string>());

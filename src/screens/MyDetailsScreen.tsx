@@ -1,14 +1,15 @@
 import { Layout } from '../theme/layout';
 import { Colors } from '../theme/colors';
-import React, { useCallback, useContext, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { ScrollView, Text, View, StyleSheet, RefreshControl } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { AuthContext } from '../context/AuthContext';
+import { useAppSelector } from '../store/hooks';
+import { selectCurrentUser } from '../store/authSlice';
 import { loadMyEmployee } from '../services/employeeScope';
 import type { Employee } from './EmployeesScreen';
 
 export default function MyDetailsScreen() {
-  const { user } = useContext(AuthContext);
+  const user = useAppSelector(selectCurrentUser);
   const generation = useRef(0);
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [error, setError] = useState('');

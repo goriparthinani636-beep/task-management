@@ -1,13 +1,14 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { Tabs } from 'expo-router';
-import { AuthContext } from '../../context/AuthContext';
+import { useAppSelector } from '../../store/hooks';
+import { selectCurrentUser } from '../../store/authSlice';
 import { Colors } from '../../theme/colors';
 import { TabIcon } from '../../components/TabIcon';
 
 const icons = { dashboard: 'Dashboard', employees: 'Employees', details: 'Employees', tasks: 'Tasks',
   attendance: 'Attendance', files: 'FileUpload', profile: 'Profile' } as const;
 export default function MainTabs() {
-  const { user } = useContext(AuthContext);
+  const user = useAppSelector(selectCurrentUser);
   const manager = user?.role === 'Manager';
   return <Tabs key={`${user?.id}:${user?.employeeId}:${user?.role}`} screenOptions={({ route }) => ({ tabBarActiveTintColor: Colors.primary,
     tabBarInactiveTintColor: Colors.textMuted,

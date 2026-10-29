@@ -1,6 +1,6 @@
 import { Layout } from '../theme/layout';
 
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -14,22 +14,18 @@ import {
 import { Colors } from '../theme/colors';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../store/useAuth';
 
 export const LoginScreen = () => {
-  const auth = useContext(AuthContext);
+  const auth = useAuth();
 
-  if (!auth) {
-    throw new Error('LoginScreen must be rendered inside AuthProvider.');
-  }
-
-  const { login } = auth;
+  const { login, isSigningIn, isLoggingOut } = auth;
+  const loading = isSigningIn || isLoggingOut;
 
   const [role, setRole] = useState<'Manager' | 'Employee'>('Employee');
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleLogin = async (): Promise<void> => {
@@ -45,13 +41,10 @@ export const LoginScreen = () => {
       return;
     }
 
-    setLoading(true);
-
     try {
       await login(email.trim(), password, role);
 
-      // AuthContext lo token set ayyaka App.tsx
-      // automatically main app/dashboard ni chupistundi.
+      // Redux authentication state enables the protected tabs.
     } catch (error: unknown) {
       const err = error as {
         message?: string;
@@ -97,8 +90,6 @@ export const LoginScreen = () => {
             : err.message ?? 'Unable to sign in. Please try again.',
         );
       }
-    } finally {
-      setLoading(false);
     }
   };
 

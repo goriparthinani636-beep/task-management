@@ -1,3 +1,5 @@
+import { useAppSelector } from '../store/hooks';
+import { selectCurrentUser } from '../store/authSlice';
 import { Layout } from '../theme/layout';
 //Backend nundi employee statistics teesukoni screen meeda display chestundi.
 import React, { useEffect, useState, useCallback } from 'react';
@@ -29,6 +31,7 @@ interface DashboardStats {
 }
 
 export const DashboardScreen = () => {
+  const user = useAppSelector(selectCurrentUser);
   //react component start 
   //export valla vere file import cheyyagaladu.
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -84,6 +87,7 @@ export const DashboardScreen = () => {
       }
     >
       <Text style={styles.heading}>Overview</Text>
+      <Text style={{ color: Colors.textMuted, marginBottom: 16 }}>Welcome, {user?.name || 'Manager'}</Text>
 
       {error ? (
         <View style={styles.errorContainer}>
