@@ -1,3 +1,5 @@
+import { AppIcon } from '../components/AppIcon';
+import { ScreenHeading, SectionTitle } from '../components/ScreenUI';
 import { Layout } from '../theme/layout';
 import { Colors } from '../theme/colors';
 
@@ -261,14 +263,12 @@ export default function AttendanceScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Attendance</Text>
-      <Text style={styles.subtitle}>
-        Mark your attendance with a selfie within the office attendance area.
-      </Text>
+      <ScreenHeading eyebrow="WORKSPACE / ATTENDANCE" title="Make today count" subtitle="A quick location check. A selfie. You’re checked in." />
+      {(!isManager || user?.employeeId) && <View style={styles.steps}>{[['pin', 'Location'], ['camera', 'Selfie'], ['check', 'Check in']].map(([icon, label], index) => <View key={label} style={styles.step}><View style={[styles.stepIcon, index < (selfieUri ? 3 : distance !== null ? 2 : 1) && { backgroundColor: Colors.primarySoft }]}><AppIcon name={icon as 'pin' | 'camera' | 'check'} size={19} /></View><Text style={styles.stepText}>0{index + 1}  {label}</Text></View>)}</View>}
 
       {(!isManager || user?.employeeId) && <>
       <View style={styles.infoCard}>
-        <Text style={styles.infoLabel}>Allowed radius</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}><AppIcon name="shield" size={19} /><Text style={styles.cardEyebrow}>OFFICE CHECK-IN</Text></View><Text style={styles.infoLabel}>Allowed radius</Text>
         <Text style={styles.infoValue}>{office ? `${office.radiusMeters} metres` : 'Office boundary checked when marking attendance'}</Text>
 
         {distance !== null && (
@@ -325,16 +325,16 @@ export default function AttendanceScreen() {
       )}
 
       </>}
-      <Text style={styles.title}>{isManager ? 'All attendance' : 'My attendance'}</Text>
-      <TouchableOpacity onPress={loadHistory}><Text>Refresh history</Text></TouchableOpacity>
+      <View style={{ marginTop: 28 }}><SectionTitle title={isManager ? 'Team attendance' : 'My check-ins'} detail={records.length + ' RECORDS'} /></View>
+      <TouchableOpacity accessibilityRole="button" onPress={loadHistory} style={styles.refreshLink}><Text style={{ color: Colors.primary, fontSize: 12, fontWeight: '700' }}>Refresh check-ins</Text></TouchableOpacity>
       {historyError ? <Text>{historyError}</Text> : records.length === 0 ? <Text>No attendance recorded yet.</Text> : null}
-      {records.map(record => <View style={styles.infoCard} key={record.id}>
-        <Text>{record.employeeName} · #{record.employeeId}</Text>
-        <Text>{record.workDate} · {new Date(record.checkedInAt).toLocaleTimeString()}</Text>
+      {records.map(record => <View style={styles.historyCard} key={record.id}>
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 10 }}><AppIcon name="check" size={18} /><Text style={{ fontWeight: '700', color: Colors.textDark, flex: 1 }}>{record.employeeName}</Text><Text style={{ color: Colors.textMuted, fontSize: 11 }}>#{record.employeeId}</Text></View>
+        <Text style={{ color: Colors.textMuted, fontSize: 12, marginBottom: 10 }}>{record.workDate} · {new Date(record.checkedInAt).toLocaleTimeString()}</Text>
         <TouchableOpacity onPress={async () => {
           try { setPhoto((await api.get('/attendance/' + record.id + '/selfie')).data.dataUri); }
           catch { Alert.alert('Error', 'Unable to load attendance selfie.'); }
-        }}><Text>View selfie</Text></TouchableOpacity>
+        }}><Text style={{ color: Colors.primary, fontWeight: '700', fontSize: 12, paddingVertical: 10 }}>View attendance selfie</Text></TouchableOpacity>
       </View>)}
       {photo && <TouchableOpacity onPress={() => setPhoto(null)}><Image source={{ uri: photo }} style={styles.preview} /><Text>Close selfie</Text></TouchableOpacity>}
       {loading && (
@@ -349,10 +349,13 @@ export default function AttendanceScreen() {
 }
 
 const styles = StyleSheet.create({
+  steps: { flexDirection: 'row', gap: 10, marginBottom: 24 }, step: { flex: 1, alignItems: 'center', gap: 9 }, stepIcon: { width: 46, height: 46, backgroundColor: Colors.card, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }, stepText: { color: Colors.textMuted, fontSize: 10, fontWeight: '600' }, cardEyebrow: { color: Colors.primary, fontWeight: '800', fontSize: 10, letterSpacing: 1.4 }, historyCard: { ...Layout.card, padding: 18, marginTop: 12 }, refreshLink: { alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center' },
   container: {
     flexGrow: 1,
     backgroundColor: Colors.background,
     padding: 20,
+    paddingBottom: 36,
+    width: '100%', maxWidth: 1000, alignSelf: 'center',
   },
   title: {
     fontSize: 26,
@@ -368,7 +371,7 @@ const styles = StyleSheet.create({
   infoCard: { ...Layout.card,
     backgroundColor: Colors.card,
     padding: 20,
-    borderRadius: 14,
+    borderRadius: 22,
     marginBottom: 24,
     elevation: 2,
   },
@@ -379,7 +382,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     color: Colors.textDark,
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: '700',
     marginTop: 4,
   },
@@ -400,7 +403,7 @@ const styles = StyleSheet.create({
   preview: {
     width: 180,
     height: 180,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   previewLabel: {
     marginTop: 8,

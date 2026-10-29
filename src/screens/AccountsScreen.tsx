@@ -1,3 +1,4 @@
+import { ScreenHeading, SectionTitle } from '../components/ScreenUI';
 import { Button } from '../components/Button';
 import { Layout } from '../theme/layout';
 import { Colors } from '../theme/colors';
@@ -32,27 +33,32 @@ export default function AccountsScreen() {
     } catch (error: any) { Alert.alert('Could not save', error?.response?.data?.message ?? 'Check the account details and try again.'); }
     finally { setBusy(false); }
   };
-  return <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
-    <Text style={styles.title}>{id === null ? 'Create login account' : 'Edit login account'}</Text>
-    <Text>Each employee needs a separate login linked to their employee ID. Existing passwords stay valid.</Text>
+  return <ScrollView style={{ backgroundColor: Colors.background }} contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
+    <ScreenHeading compact eyebrow="MANAGER / ACCESS" title="Login accounts" subtitle="The right access for every team member." />
+    <View style={styles.formCard}><Text style={styles.formTitle}>{id === null ? 'Create an account' : 'Edit account'}</Text>
+    <Text style={styles.help}>Link each employee account to their employee ID. Leave an existing password blank to keep it.</Text>
     {(['email', 'firstName', 'lastName', 'employeeId', 'password'] as const).map(key => <View key={key}>
       <Text style={styles.label}>{({ email: 'Email', firstName: 'First name', lastName: 'Last name', employeeId: 'Employee ID (required for employees)', password: id === null ? 'Password (6+ characters)' : 'New password (leave blank to keep)' })[key]}</Text>
       <TextInput style={styles.input} value={form[key]} secureTextEntry={key === 'password'}
         autoCapitalize="none" autoCorrect={false} keyboardType={key === 'employeeId' ? 'number-pad' : key === 'email' ? 'email-address' : 'default'}
         onChangeText={value => setForm(old => ({ ...old, [key]: value }))} />
     </View>)}
-    <View style={styles.row}><Button title={form.role === 'Manager' ? '✓ Manager' : 'Manager'} onPress={() => setForm({ ...form, role: 'Manager' })} />
-      <Button title={form.role === 'Employee' ? '✓ Employee' : 'Employee'} onPress={() => setForm({ ...form, role: 'Employee' })} /></View>
+    <View style={styles.row}><Button variant={form.role === 'Manager' ? 'primary' : 'secondary'} title={form.role === 'Manager' ? '✓ Manager' : 'Manager'} onPress={() => setForm({ ...form, role: 'Manager' })} />
+      <Button variant={form.role === 'Employee' ? 'primary' : 'secondary'} title={form.role === 'Employee' ? '✓ Employee' : 'Employee'} onPress={() => setForm({ ...form, role: 'Employee' })} /></View>
     <View style={styles.row}><Text>Account active</Text><Switch value={form.isActive} onValueChange={isActive => setForm({ ...form, isActive })} /></View>
     <Button title={busy ? 'Saving…' : 'Save account'} disabled={busy} onPress={save} />
     {id !== null && <Button title="Cancel edit" onPress={() => { setId(null); setForm(empty); }} />}
-    <Text style={styles.title}>Login accounts</Text>
+    </View><SectionTitle title="Team access" detail={accounts.length + ' ACCOUNTS'} />
     {accounts.map(account => <View key={account.id} style={styles.card}>
-      <Text>{account.email} · {account.role}</Text><Text>Employee #{account.employeeId ?? '—'} · {account.isActive ? 'Active' : 'Inactive'}</Text>
-      <Button title="Edit / reset password" onPress={() => { setId(account.id); setForm({ ...account, employeeId: account.employeeId?.toString() ?? '', password: '' }); }} />
+      <Text style={styles.accountName}>{account.email}</Text><Text style={styles.help}>{account.role} · Employee #{account.employeeId ?? '—'} · {account.isActive ? 'Active' : 'Inactive'}</Text>
+      <Button variant="secondary" title="Edit account / reset password" onPress={() => { setId(account.id); setForm({ ...account, employeeId: account.employeeId?.toString() ?? '', password: '' }); }} />
     </View>)}
   </ScrollView>;
 }
-const styles = StyleSheet.create({ page: { padding: 20, paddingBottom: 40, gap: 14, backgroundColor: Colors.background }, title: { fontSize: 26, fontWeight: '700', marginTop: 12 },
-  label: { marginBottom: 8, fontSize: 13, fontWeight: '600', color: Colors.textDark }, input: { ...Layout.input, backgroundColor: 'white', borderWidth: 1, borderColor: Colors.border, borderRadius: 12, padding: 12 },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center', justifyContent: 'space-between' }, card: { ...Layout.card, padding: 18, gap: 8 } });
+const styles = StyleSheet.create({
+  page: { ...Layout.page, gap: 14 }, formCard: { ...Layout.card, padding: 22, gap: 14, marginBottom: 12 },
+  formTitle: { fontSize: 20, fontWeight: '700', color: Colors.textDark }, help: { fontSize: 12, color: Colors.textMuted, lineHeight: 21 },
+  label: { marginBottom: 9, fontSize: 12, fontWeight: '700', color: Colors.textDark }, input: { ...Layout.input },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'center', justifyContent: 'space-between' },
+  card: { ...Layout.card, padding: 20, gap: 6 }, accountName: { fontSize: 14, fontWeight: '700', color: Colors.textDark },
+});

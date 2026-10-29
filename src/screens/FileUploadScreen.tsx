@@ -1,3 +1,5 @@
+import { AppIcon } from '../components/AppIcon';
+import { ScreenHeading, EmptyState, SectionTitle } from '../components/ScreenUI';
 import { Button } from '../components/Button';
 import { Layout } from '../theme/layout';
 import { Colors } from '../theme/colors';
@@ -283,180 +285,43 @@ export const FileUploadScreen = () => {
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>File Uploads</Text>
-      <Text style={styles.help}>
-        PDF, JPG, JPEG, PNG and DOCX. Maximum 5 files per upload, 5 MB each.
-        Every file requires a remark.
-      </Text>
-
-      <Button
-        title="Select Files"
-        onPress={pickFiles}
-        disabled={isUploading || deletingId !== null || files.length >= MAX_FILES}
-      />
-
-      {files.length > 0 && (
-        <>
-          <Text style={styles.sectionTitle}>Files ready to upload</Text>
-
-          <FlatList
-            style={styles.list}
-            data={files}
-            keyExtractor={item => item.id}
-            renderItem={({ item }) => (
-              <View style={styles.fileCard}>
-                <Text style={styles.fileName}>{item.name}</Text>
-                <Text>Size: {formatSize(item.size)}</Text>
-
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter required remark"
-                  value={item.remark}
-                  onChangeText={text => updateRemark(item.id, text)}
-                  editable={!isUploading}
-                  maxLength={1000}
-                />
-
-                <Button
-                  title="Remove File"
-                  color={Colors.error}
-                  onPress={() => removeFile(item.id)}
-                  disabled={isUploading}
-                />
-              </View>
-            )}
-          />
-
-          <Button
-            title={isUploading ? 'Uploading...' : 'Upload Files'}
-            onPress={uploadFiles}
-            disabled={isUploading || deletingId !== null}
-          />
-        </>
-      )}
-
-      <Text style={styles.sectionTitle}>Uploaded Files</Text>
-
-      {isLoading ? (
-        <ActivityIndicator
-          size="large"
-          color={Colors.primary}
-          style={styles.loader}
-        />
-      ) : (
-        <FlatList
-          style={styles.uploadedList}
-          data={uploadedFiles}
-          keyExtractor={item => String(item.id)}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={() => void loadUploadedFiles(true)}
-            />
-          }
-          ListEmptyComponent={
-            <Text style={styles.empty}>No uploaded files found.</Text>
-          }
-          renderItem={({ item }) => (
-            <View style={styles.fileCard}>
-              <Text style={styles.fileName}>{item.fileName}</Text>
-              <Text>Format: {item.fileFormat}</Text>
-              <Text>Size: {formatSize(item.fileSize)}</Text>
-              <Text>Remark: {item.remark}</Text>
-              <Text>Uploaded: {formatDate(item.uploadedAt)}</Text>
-
-              <View style={styles.openButton}>
-                <Button
-                  title="Open File"
-                  onPress={() => void openUploadedFile(item.fileUrl)}
-                  disabled={deletingId === item.id}
-                />
-              </View>
-              <View style={styles.openButton}>
-                <Button
-                  title={deletingId === item.id ? 'Deleting...' : 'Delete File'}
-                  color={Colors.error}
-                  onPress={() => confirmDelete(item)}
-                  disabled={deletingId !== null || isUploading || isRefreshing}
-                />
-              </View>
-            </View>
-          )}
-        />
-      )}
-
-      <View style={styles.refreshButton}>
-        <Button
-          title="Refresh Uploaded Files"
-          onPress={() => void loadUploadedFiles(true)}
-          disabled={isLoading || isRefreshing || deletingId !== null}
-        />
-      </View>
-    </View>
-  );
+  return <View style={styles.container}>
+    <FlatList data={uploadedFiles} keyExtractor={item => String(item.id)} style={{ flex: 1 }} showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled"
+      refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={() => void loadUploadedFiles(true)} tintColor={Colors.primary} />}
+      ListHeaderComponent={<>
+        <ScreenHeading eyebrow="WORKSPACE / DOCUMENTS" title="Files & documents" subtitle="Keep your work organised and within reach." />
+        <View style={styles.uploadPanel}><View style={styles.uploadIcon}><AppIcon name="folder" size={28} /></View>
+          <Text style={styles.uploadTitle}>A place for your important files</Text><Text style={styles.help}>PDF, JPG, PNG or DOCX · Up to 5 MB each{'\n'}Choose up to 5 files per upload.</Text>
+          <Button title="+  Choose files" onPress={pickFiles} disabled={isUploading || deletingId !== null || files.length >= MAX_FILES} />
+        </View>
+        {!!files.length && <View style={{ marginTop: 24 }}><SectionTitle title="Ready to upload" detail={files.length + ' SELECTED'} />
+          {files.map(item => <View style={styles.fileCard} key={item.id}><View style={styles.fileTop}><View style={styles.typeBadge}><Text style={styles.typeText}>{item.name.split('.').pop()?.toUpperCase()}</Text></View>
+            <View style={{ flex: 1 }}><Text style={styles.fileName}>{item.name}</Text><Text style={styles.meta}>{formatSize(item.size)}</Text></View></View>
+            <Text style={styles.remarkLabel}>REMARK *</Text><TextInput style={styles.input} placeholder="Add a short note about this file" placeholderTextColor={Colors.textMuted}
+              accessibilityLabel={'Remark for ' + item.name} value={item.remark} onChangeText={text => updateRemark(item.id, text)} editable={!isUploading} maxLength={1000} />
+            <Button title="Remove from selection" color={Colors.error} variant="ghost" onPress={() => removeFile(item.id)} disabled={isUploading} /></View>)}
+          <Button title={isUploading ? 'Uploading your files…' : 'Upload ' + files.length + (files.length === 1 ? ' file' : ' files')} onPress={uploadFiles} disabled={isUploading || deletingId !== null} />
+        </View>}
+        <View style={styles.libraryHeading}><SectionTitle title="Document library" detail={uploadedFiles.length + ' FILES'} /></View>
+      </>}
+      ListEmptyComponent={isLoading ? <ActivityIndicator color={Colors.primary} style={{ marginVertical: 30 }} /> : <EmptyState icon="folder" title="Make room for good work" message="Your uploaded documents will appear here. Choose a file above to get started." />}
+      renderItem={({ item }) => <View style={styles.fileCard}><View style={styles.fileTop}><View style={styles.typeBadge}><Text style={styles.typeText}>{(item.fileFormat || item.fileName.split('.').pop() || 'FILE').toUpperCase().replace('.', '')}</Text></View>
+        <View style={{ flex: 1 }}><Text style={styles.fileName}>{item.fileName}</Text><Text style={styles.meta}>{formatSize(item.fileSize)} · {formatDate(item.uploadedAt)}</Text></View></View>
+        <View style={styles.remarkBox}><Text style={styles.remarkLabel}>NOTE</Text><Text style={styles.remarkText}>{item.remark || 'No remark provided.'}</Text></View>
+        <View style={styles.actions}><View style={{ flex: 1 }}><Button title="Open document" variant="secondary" onPress={() => void openUploadedFile(item.fileUrl)} disabled={deletingId === item.id} /></View>
+          <View style={{ flex: 1 }}><Button title={deletingId === item.id ? 'Deleting…' : 'Delete'} variant="ghost" color={Colors.error} onPress={() => confirmDelete(item)} disabled={deletingId !== null || isUploading || isRefreshing} /></View></View>
+      </View>}
+      ListFooterComponent={<Button title="Refresh library" variant="ghost" onPress={() => void loadUploadedFiles(true)} disabled={isLoading || isRefreshing || deletingId !== null} />} />
+  </View>;
 };
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: Colors.card,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  help: {
-    color: Colors.textMuted,
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  list: {
-    maxHeight: 260,
-  },
-  uploadedList: {
-    flex: 1,
-    marginTop: 4,
-  },
-  empty: {
-    marginVertical: 20,
-    color: Colors.textMuted,
-  },
-  fileCard: { ...Layout.card,
-    padding: 12,
-    marginVertical: 6,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 12,
-  },
-  fileName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  input: { ...Layout.input,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 12,
-    padding: 10,
-    marginVertical: 10,
-  },
-  loader: {
-    marginVertical: 24,
-  },
-  openButton: {
-    marginTop: 8,
-  },
-  refreshButton: {
-    marginTop: 8,
-    marginBottom: 4,
-  },
+  container: { flex: 1, backgroundColor: Colors.background }, content: { ...Layout.page, gap: 0, flexGrow: 1 },
+  uploadPanel: { backgroundColor: Colors.primarySoft, borderColor: '#B8DCD1', borderWidth: 1, borderStyle: 'dashed', borderRadius: 22, padding: 24, alignItems: 'stretch' },
+  uploadIcon: { width: 58, height: 58, borderRadius: 20, backgroundColor: Colors.card, alignSelf: 'center', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  uploadTitle: { color: Colors.textDark, fontWeight: '700', textAlign: 'center', fontSize: 17, lineHeight: 24 }, help: { color: Colors.textMuted, fontSize: 11, lineHeight: 20, textAlign: 'center', marginTop: 8, marginBottom: 14 },
+  libraryHeading: { marginTop: 28 }, fileCard: { ...Layout.card, padding: 18, marginBottom: 14 }, fileTop: { flexDirection: 'row', alignItems: 'center', gap: 12 }, typeBadge: { minWidth: 46, height: 48, borderRadius: 14, backgroundColor: Colors.accentSoft, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 7 },
+  typeText: { color: Colors.accent, fontSize: 10, fontWeight: '800' }, fileName: { fontSize: 14, fontWeight: '700', color: Colors.textDark, lineHeight: 21 }, meta: { fontSize: 10, color: Colors.textMuted, marginTop: 5, lineHeight: 17 },
+  remarkBox: { padding: 12, backgroundColor: Colors.surface, borderRadius: 12, marginTop: 16 }, remarkLabel: { fontSize: 9, color: Colors.textMuted, fontWeight: '700', letterSpacing: 1, marginTop: 12, marginBottom: 6 }, remarkText: { fontSize: 12, color: Colors.textDark, lineHeight: 20 },
+  input: { ...Layout.input, marginTop: 3 }, actions: { flexDirection: 'row', gap: 8, marginTop: 4 },
 });

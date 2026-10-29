@@ -1,3 +1,4 @@
+import { AppIcon } from '../components/AppIcon';
 import { Layout } from '../theme/layout';
 
 import React, { useState } from 'react';
@@ -102,9 +103,15 @@ export const LoginScreen = () => {
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
       >
+        <View style={styles.loginHero}>
+          <View style={styles.loginBrand}><View style={styles.brandIcon}><AppIcon name="grid" color={Colors.mint} size={23} /></View><Text style={styles.brandWord}>appzon<Text style={{ color: Colors.mint }}>.</Text></Text></View>
+          <Text style={styles.heroHeading}>Your workday.{'\n'}Well organised.</Text>
+          <Text style={styles.heroCopy}>One place for your team, tasks and time.</Text>
+          <View style={styles.heroPills}><View style={styles.heroPill}><AppIcon name="users" size={13} color={Colors.mint} /><Text style={styles.pillText}>People</Text></View><View style={styles.heroPill}><AppIcon name="task" size={13} color={Colors.mint} /><Text style={styles.pillText}>Progress</Text></View><View style={styles.heroPill}><AppIcon name="clock" size={13} color={Colors.mint} /><Text style={styles.pillText}>Presence</Text></View></View>
+        </View>
         <View style={styles.card}>
           <Text style={styles.brandTitle}>
-            APPZON TECHNOLOGIES
+            EMPLOYEE WORKSPACE
           </Text>
 
           <Text style={styles.heading}>
@@ -112,7 +119,7 @@ export const LoginScreen = () => {
           </Text>
 
           <Text style={styles.subheading}>
-            Sign in as a manager or employee
+            Choose your role and step into your workspace.
           </Text>
 
           <View style={styles.roleSelector}>
@@ -155,7 +162,7 @@ export const LoginScreen = () => {
           />
 
           <Button
-            title="Sign In"
+            title="Sign in to your workspace"
             onPress={handleLogin}
             loading={loading}
           />
@@ -169,12 +176,22 @@ export const LoginScreen = () => {
             </Text>
           ) : null}
         </View>
+        <View style={styles.secureNote}><AppIcon name="shield" size={14} color={Colors.textMuted} /><Text style={styles.secureText}>Your workspace. Securely connected.</Text></View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
+  loginHero: { width: '100%', maxWidth: 460, alignSelf: 'center', backgroundColor: Colors.ink, borderRadius: 26, padding: 24, marginBottom: 18 },
+  loginBrand: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  brandIcon: { width: 42, height: 42, backgroundColor: '#24534B', borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  brandWord: { fontSize: 28, fontWeight: '800', color: Colors.card, letterSpacing: -1.5 },
+  heroHeading: { fontSize: 28, lineHeight: 34, fontWeight: '800', color: Colors.card, letterSpacing: -1 },
+  heroCopy: { fontSize: 12, lineHeight: 20, color: Colors.onInk, marginTop: 10 },
+  heroPills: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 24 },
+  heroPill: { flexDirection: 'row', alignItems: 'center', gap: 5 }, pillText: { fontSize: 10, color: Colors.onInk },
+  secureNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, marginTop: 22 }, secureText: { color: Colors.textMuted, fontSize: 10 },
   roleSelector: { marginBottom: 20 },
   roleLabel: { fontSize: 14, fontWeight: '600', color: Colors.textDark, marginBottom: 6 },
   roleDropdown: { ...Layout.input, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
@@ -195,12 +212,14 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
+    paddingTop: 36,
+    paddingBottom: 32,
   },
 
   card: { ...Layout.card, width: '100%', maxWidth: 460, alignSelf: 'center',
     backgroundColor: Colors.card,
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 24,
+    padding: 26,
     shadowColor: Colors.textDark,
     shadowOpacity: 0.06,
     shadowOffset: { width: 0, height: 4 },
@@ -212,29 +231,29 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: Colors.primary,
-    textAlign: 'center',
+    textAlign: 'left',
     letterSpacing: 1.2,
     marginBottom: 8,
   },
 
   heading: {
-    fontSize: 32,
+    fontSize: 27,
     fontWeight: '700',
     color: Colors.textDark,
-    textAlign: 'center',
+    textAlign: 'left',
   },
 
   subheading: {
     fontSize: 14,
     color: Colors.textMuted,
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 24,
     marginTop: 4,
   },
 
   errorText: {
     color: Colors.error,
-    textAlign: 'center',
+    textAlign: 'left',
     marginTop: 14,
     fontSize: 13,
   },

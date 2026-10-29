@@ -1,8 +1,9 @@
 // Shared palette for all employee and manager screens.
 export const Colors = {
-  primary: '#175CD3', primarySoft: '#EBF2FF', background: '#F3F6FB',
-  card: '#FFFFFF', surface: '#F8FAFD', textDark: '#182B49', textMuted: '#566780',
-  border: '#DCE4EF', error: '#B42318', errorSoft: '#FEF0EE',
-  success: '#067647', successSoft: '#ECFDF3', accent: '#087F8C', accentSoft: '#E8F7F8',
-  warning: '#B54708', warningSoft: '#FFFAEB',
+  primary: '#087F70', primarySoft: '#E5F5F0', background: '#F4F6F8',
+  card: '#FFFFFF', surface: '#F7F9FA', textDark: '#182D38', textMuted: '#60747E',
+  border: '#E3EAED', error: '#B73737', errorSoft: '#FFF0F0',
+  success: '#08794E', successSoft: '#E7F7EE', accent: '#3760B5', accentSoft: '#EDF2FF',
+  warning: '#9B610B', warningSoft: '#FFF4DC',
+  ink: '#133D3A', onInk: '#D0E5E0', mint: '#B8F2D7',
 };

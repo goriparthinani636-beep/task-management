@@ -1,3 +1,5 @@
+import { AppIcon } from '../components/AppIcon';
+import { ScreenHeading } from '../components/ScreenUI';
 import { Button } from '../components/Button';
 import { Layout } from '../theme/layout';
 import { Link } from 'expo-router';
@@ -43,8 +45,8 @@ export const ProfileScreen = () => {
   const displayName: string = currentUser?.name || emailText.split('@')[0] || 'My account';
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 32 }}>
-      {/* Profile Header Card */}
+    <ScrollView style={styles.container} contentContainerStyle={Layout.page}>
+      <ScreenHeading compact eyebrow="YOUR WORKSPACE" title="My account" subtitle="Your identity, preferences and security." />
       <View style={styles.profileCard}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>
@@ -57,10 +59,10 @@ export const ProfileScreen = () => {
         </View>
       </View>
 
-      {user?.role === 'Manager' && <Link href="/accounts" style={{ padding: 16, color: Colors.primary }}>Manage login accounts</Link>}
+      {user?.role === 'Manager' && <Link href="/accounts" style={{ padding: 18, borderRadius: 14, backgroundColor: Colors.primarySoft, color: Colors.primary, fontWeight: '700' }}>Manage login accounts</Link>}
       {/* Account Details Section */}
       <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>Account Details</Text>
+        <Text style={styles.sectionTitle}>Account details</Text>
 
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>User ID</Text>
@@ -81,8 +83,8 @@ export const ProfileScreen = () => {
       </View>
 
       <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>Change password</Text>
-        <TextInput placeholder="Current password" accessibilityLabel="Current password" secureTextEntry value={currentPassword} onChangeText={setCurrentPassword} autoCapitalize="none" style={Layout.input} />
+        <View style={{ flexDirection: 'row', gap: 10 }}><AppIcon name="shield" size={19} /><Text style={styles.sectionTitle}>Account security</Text></View><Text style={styles.sectionHelp}>Use a password you do not use anywhere else.</Text>
+        <TextInput placeholder="Current password" accessibilityLabel="Current password" secureTextEntry value={currentPassword} onChangeText={setCurrentPassword} autoCapitalize="none" style={[Layout.input, { marginBottom: 12 }]} />
         <TextInput placeholder="New password (6+ characters)" accessibilityLabel="New password" secureTextEntry value={newPassword} onChangeText={setNewPassword} autoCapitalize="none" style={Layout.input} />
         <Button title={saving ? 'Saving…' : 'Change password'} disabled={saving} onPress={async () => {
           if (saving) return;
@@ -97,9 +99,9 @@ export const ProfileScreen = () => {
         }} />
       </View>
       <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>Task notifications</Text>
+        <View style={{ flexDirection: 'row', gap: 10 }}><AppIcon name="bell" size={19} /><Text style={styles.sectionTitle}>Stay in the loop</Text></View>
         <Text style={{ marginBottom: 12, color: Colors.textMuted, lineHeight: 22 }}>{notificationStatus}</Text>
-        <Button title="Enable / retry notifications" onPress={() => { void retryNotifications(); }} />
+        <Button variant="secondary" title="Enable / retry notifications" onPress={() => { void retryNotifications(); }} />
       </View>
       {/* Logout Action */}
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
@@ -110,17 +112,17 @@ export const ProfileScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  sectionHelp: { color: Colors.textMuted, fontSize: 12, lineHeight: 20, marginBottom: 16 },
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-    padding: 20,
   },
   profileCard: { ...Layout.card,
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.ink,
     borderRadius: 18,
     padding: 24,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 0,
     elevation: 2,
     shadowColor: Colors.textDark,
     shadowOpacity: 0.04,
@@ -130,7 +132,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: Colors.primary,
+    backgroundColor: '#24534B',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
@@ -143,12 +145,12 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.textDark,
+    color: Colors.card,
     textTransform: 'capitalize',
   },
   userEmail: {
     fontSize: 14,
-    color: Colors.textMuted,
+    color: Colors.onInk,
     marginTop: 4,
   },
   roleBadge: {
@@ -167,7 +169,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderRadius: 18,
     padding: 20,
-    marginBottom: 24,
+    marginBottom: 0,
     elevation: 2,
   },
   sectionTitle: {

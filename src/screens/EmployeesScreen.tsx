@@ -1,3 +1,5 @@
+import { AppIcon } from '../components/AppIcon';
+import { ScreenHeading, SearchField, EmptyState } from '../components/ScreenUI';
 import { Layout } from '../theme/layout';
 import React, { useMemo, useRef, useState, useCallback } from 'react';
 import { useFocusEffect } from 'expo-router';
@@ -37,6 +39,7 @@ export interface Employee {
 export const EmployeesScreen = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [search, setSearch] = useState('');
+  const [employeeStatus, setEmployeeStatus] = useState('All');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   // Add/Edit modal
@@ -127,7 +130,7 @@ export const EmployeesScreen = () => {
   const handleSearch = (text: string) => {
     setSearch(text);
   };
-  const filteredEmployees = useMemo(() => filterEmployees(employees, search), [employees, search]);
+  const filteredEmployees = useMemo(() => filterEmployees(employees, search).filter(employee => employeeStatus === 'All' || employee.status.toLowerCase() === employeeStatus.toLowerCase()), [employees, search, employeeStatus]);
   const resetForm = () => {
     setFirstName('');
     setLastName('');
@@ -330,24 +333,15 @@ export const EmployeesScreen = () => {
   }
   return (
     <View style={styles.container}>
-      {/* Search and Add */}
-      <View style={styles.topBar}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search by name, role, dept..."
-          placeholderTextColor={Colors.textMuted}
-          value={search}
-          onChangeText={handleSearch}
-        />
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={openAddModal}
-        >
-          <Text style={styles.addBtnText}>+ Add</Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeading eyebrow="WORKSPACE / PEOPLE" title="Your team" subtitle={employees.length + ' people. One shared purpose.'}
+        action={<TouchableOpacity accessibilityRole="button" accessibilityLabel="Add employee" style={styles.addBtn} onPress={openAddModal}><AppIcon name="plus" color={Colors.card} size={17} /><Text style={styles.addBtnText}>Add</Text></TouchableOpacity>} />
+      <SearchField value={search} onChangeText={handleSearch} placeholder="Search people, email or department…" />
+      <View style={styles.statusFilters}>{['All', 'Active', 'Inactive'].map(option => <TouchableOpacity key={option} accessibilityRole="button" accessibilityState={{ selected: employeeStatus === option }}
+        style={[styles.statusFilter, employeeStatus === option && styles.statusFilterSelected]} onPress={() => setEmployeeStatus(option)}><Text style={[styles.statusFilterText, employeeStatus === option && { color: Colors.card }]}>{option} · {option === 'All' ? employees.length : employees.filter(employee => employee.status.toLowerCase() === option.toLowerCase()).length}</Text></TouchableOpacity>)}</View>
       {/* Employee List */}
       <FlatList
+        contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
         data={filteredEmployees}
         keyExtractor={(item) => item.id.toString()}
         refreshControl={
@@ -357,11 +351,7 @@ export const EmployeesScreen = () => {
           />
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              No employees found.
-            </Text>
-          </View>
+          <EmptyState icon="users" title="No people found" message="Try another search or add a new employee to your team." />
         }
         renderItem={({ item }) => (
           <View style={styles.card}>
@@ -415,13 +405,9 @@ export const EmployeesScreen = () => {
               </View>
             </TouchableOpacity>
             <View style={styles.contactRow}>
-              <Text style={styles.contactText}>
-                📧 {item.email}
-              </Text>
+              <View style={{ flexDirection: 'row', gap: 7, alignItems: 'center' }}><AppIcon name="mail" size={14} color={Colors.textMuted} /><Text style={[styles.contactText, { flex: 1 }]}>{item.email}</Text></View>
               {item.phone ? (
-                <Text style={styles.contactText}>
-                  📞 {item.phone}
-                </Text>
+                <Text style={styles.contactText}>{item.phone}</Text>
               ) : null}
             </View>
             <View style={styles.actionRow}>
@@ -459,7 +445,7 @@ export const EmployeesScreen = () => {
         visible={modalVisible}
         animationType="slide"
         transparent
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={() => { if (!formSubmitting) setModalVisible(false); }}
       >
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.modalContent}>
@@ -802,10 +788,12 @@ export const EmployeesScreen = () => {
   );
 };
 const styles = StyleSheet.create({
+  statusFilters: { flexDirection: 'row', gap: 8, paddingVertical: 16 }, statusFilter: { minHeight: 40, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 12, backgroundColor: Colors.card, borderWidth: 1, borderColor: Colors.border }, statusFilterSelected: { backgroundColor: Colors.ink, borderColor: Colors.ink }, statusFilterText: { color: Colors.textMuted, fontSize: 11, fontWeight: '600' },
   container: {
     flex: 1,
     backgroundColor: Colors.background,
     padding: 20,
+    width: '100%', maxWidth: 1000, alignSelf: 'center',
   },
   center: {
     flex: 1,
@@ -826,7 +814,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     color: Colors.textDark,
   },
-  addBtn: { minHeight: 44, justifyContent: 'center',
+  addBtn: { minHeight: 46, justifyContent: 'center', flexDirection: 'row', gap: 5,
     backgroundColor: Colors.primary,
     marginLeft: 8,
     paddingHorizontal: 16,
@@ -839,8 +827,8 @@ const styles = StyleSheet.create({
   },
   card: { ...Layout.card,
     backgroundColor: Colors.card,
-    borderRadius: 18,
-    padding: 14,
+    borderRadius: 20,
+    padding: 20,
     marginBottom: 10,
     elevation: 2,
     shadowColor: Colors.textDark,
@@ -852,9 +840,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 48,
+    height: 48,
+    borderRadius: 17,
     backgroundColor: Colors.primarySoft,
     justifyContent: 'center',
     alignItems: 'center',
@@ -869,7 +857,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
     color: Colors.textDark,
   },
