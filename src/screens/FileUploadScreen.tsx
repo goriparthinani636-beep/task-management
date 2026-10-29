@@ -1,3 +1,4 @@
+// Documents page: file select, remarks add, upload and saved files display.
 import { AppIcon } from '../components/AppIcon';
 import { ScreenHeading, EmptyState, SectionTitle } from '../components/ScreenUI';
 import { Button } from '../components/Button';
@@ -18,7 +19,14 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect } from 'expo-router';
 import { api } from '../services/api';
-import { ALLOWED_EXTENSIONS, MAX_FILE_SIZE, deleteUploadedFile, openFile, uploadedFiles as parseUploadedFiles, type UploadedFile } from '../services/files';
+import {
+  ALLOWED_EXTENSIONS,
+  MAX_FILE_SIZE,
+  deleteUploadedFile,
+  openFile,
+  uploadedFiles as parseUploadedFiles,
+  type UploadedFile,
+} from '../services/files';
 
 type SelectedFile = {
   id: string;
@@ -41,24 +49,39 @@ export const FileUploadScreen = () => {
   const deleting = useRef(false);
 
   const confirmDelete = (file: UploadedFile) => {
-    Alert.alert('Delete file?', `Permanently delete "${file.fileName}" from uploads and storage? If it is an employee resume, remove it from the employee profile first.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: async () => {
-        if (deleting.current) return;
-        deleting.current = true;
-        setDeletingId(file.id);
-        try {
-          await deleteUploadedFile(file.id);
-          setUploadedFiles(previous => previous.filter(item => item.id !== file.id));
-          Alert.alert('Deleted', 'The file was deleted.');
-        } catch (error: any) {
-          Alert.alert('Delete failed', error?.response?.data?.message ?? error?.message ?? 'Could not delete the file. Please retry.');
-        } finally {
-          deleting.current = false;
-          setDeletingId(null);
-        }
-      } },
-    ]);
+    Alert.alert(
+      'Delete file?',
+      `Permanently delete "${file.fileName}" from uploads and storage? If it is an employee resume, remove it from the employee profile first.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            if (deleting.current) return;
+            deleting.current = true;
+            setDeletingId(file.id);
+            try {
+              await deleteUploadedFile(file.id);
+              setUploadedFiles((previous) =>
+                previous.filter((item) => item.id !== file.id),
+              );
+              Alert.alert('Deleted', 'The file was deleted.');
+            } catch (error: any) {
+              Alert.alert(
+                'Delete failed',
+                error?.response?.data?.message ??
+                  error?.message ??
+                  'Could not delete the file. Please retry.',
+              );
+            } finally {
+              deleting.current = false;
+              setDeletingId(null);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const loadUploadedFiles = useCallback(async (refresh = false, reportError = true) => {
@@ -79,12 +102,13 @@ export const FileUploadScreen = () => {
         error?.response?.data ?? error?.message,
       );
 
-      if (reportError) Alert.alert(
-        'Unable to load files',
-        error?.response?.status === 401
-          ? 'Please log in again.'
-          : 'Could not load uploaded files. Check your connection and try again.',
-      );
+      if (reportError)
+        Alert.alert(
+          'Unable to load files',
+          error?.response?.status === 401
+            ? 'Please log in again.'
+            : 'Could not load uploaded files. Check your connection and try again.',
+        );
       return false;
     } finally {
       setIsLoading(false);
@@ -108,7 +132,7 @@ export const FileUploadScreen = () => {
       if (result.canceled) return;
 
       const invalidFiles: string[] = [];
-      const existingUris = new Set(files.map(file => file.uri));
+      const existingUris = new Set(files.map((file) => file.uri));
       const newFiles: SelectedFile[] = [];
 
       for (const file of result.assets) {
@@ -151,7 +175,7 @@ export const FileUploadScreen = () => {
         });
       }
 
-      setFiles(previous => [...previous, ...newFiles]);
+      setFiles((previous) => [...previous, ...newFiles]);
 
       if (invalidFiles.length > 0) {
         Alert.alert(
@@ -169,13 +193,13 @@ export const FileUploadScreen = () => {
   };
 
   const updateRemark = (id: string, remark: string) => {
-    setFiles(previous =>
-      previous.map(file => (file.id === id ? { ...file, remark } : file)),
+    setFiles((previous) =>
+      previous.map((file) => (file.id === id ? { ...file, remark } : file)),
     );
   };
 
   const removeFile = (id: string) => {
-    setFiles(previous => previous.filter(file => file.id !== id));
+    setFiles((previous) => previous.filter((file) => file.id !== id));
   };
 
   const formatSize = (bytes: number) => {
@@ -189,9 +213,7 @@ export const FileUploadScreen = () => {
   const formatDate = (value: string) => {
     const date = new Date(value);
 
-    return Number.isNaN(date.getTime())
-      ? value
-      : date.toLocaleString();
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
   };
 
   const uploadFiles = async () => {
@@ -203,35 +225,30 @@ export const FileUploadScreen = () => {
     }
 
     const invalidFiles = files.filter(
-      file =>
+      (file) =>
         !file.remark.trim() ||
         file.remark.trim().length > 1000 ||
         file.size > MAX_FILE_SIZE ||
-        !ALLOWED_EXTENSIONS.includes(
-          file.name.split('.').pop()?.toLowerCase() ?? '',
-        ),
+        !ALLOWED_EXTENSIONS.includes(file.name.split('.').pop()?.toLowerCase() ?? ''),
     );
 
     if (invalidFiles.length > 0) {
       Alert.alert(
         'Validation Error',
         'Check file format, size and required remark (maximum 1000 characters) for:\n' +
-          invalidFiles.map(file => file.name).join('\n'),
+          invalidFiles.map((file) => file.name).join('\n'),
       );
       return;
     }
 
     const formData = new FormData();
 
-    files.forEach(file => {
-      formData.append(
-        'files',
-        {
-          uri: file.uri,
-          name: file.name,
-          type: file.mimeType ?? 'application/octet-stream',
-        } as any,
-      );
+    files.forEach((file) => {
+      formData.append('files', {
+        uri: file.uri,
+        name: file.name,
+        type: file.mimeType ?? 'application/octet-stream',
+      } as any);
 
       // Backend expects a List<string> named "remarks".
       formData.append('remarks', file.remark.trim());
@@ -248,12 +265,18 @@ export const FileUploadScreen = () => {
       });
 
       const savedFiles = parseUploadedFiles(response.data, files.length);
-      setUploadedFiles(previous => [...savedFiles, ...previous.filter(item => !savedFiles.some(saved => saved.id === item.id))]);
+      setUploadedFiles((previous) => [
+        ...savedFiles,
+        ...previous.filter((item) => !savedFiles.some((saved) => saved.id === item.id)),
+      ]);
       setFiles([]);
       const refreshed = await loadUploadedFiles(false, false);
-      Alert.alert('Upload complete', refreshed
-        ? 'Files uploaded successfully.'
-        : 'Files were uploaded, but the list could not be refreshed. Your uploaded files are shown; refresh again when connected.');
+      Alert.alert(
+        'Upload complete',
+        refreshed
+          ? 'Files uploaded successfully.'
+          : 'Files were uploaded, but the list could not be refreshed. Your uploaded files are shown; refresh again when connected.',
+      );
     } catch (error: any) {
       console.error(
         'FILE UPLOAD ERROR:',
@@ -285,43 +308,238 @@ export const FileUploadScreen = () => {
     }
   };
 
-  return <View style={styles.container}>
-    <FlatList data={uploadedFiles} keyExtractor={item => String(item.id)} style={{ flex: 1 }} showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled"
-      refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={() => void loadUploadedFiles(true)} tintColor={Colors.primary} />}
-      ListHeaderComponent={<>
-        <ScreenHeading eyebrow="WORKSPACE / DOCUMENTS" title="Files & documents" subtitle="Keep your work organised and within reach." />
-        <View style={styles.uploadPanel}><View style={styles.uploadIcon}><AppIcon name="folder" size={28} /></View>
-          <Text style={styles.uploadTitle}>A place for your important files</Text><Text style={styles.help}>PDF, JPG, PNG or DOCX · Up to 5 MB each{'\n'}Choose up to 5 files per upload.</Text>
-          <Button title="+  Choose files" onPress={pickFiles} disabled={isUploading || deletingId !== null || files.length >= MAX_FILES} />
-        </View>
-        {!!files.length && <View style={{ marginTop: 24 }}><SectionTitle title="Ready to upload" detail={files.length + ' SELECTED'} />
-          {files.map(item => <View style={styles.fileCard} key={item.id}><View style={styles.fileTop}><View style={styles.typeBadge}><Text style={styles.typeText}>{item.name.split('.').pop()?.toUpperCase()}</Text></View>
-            <View style={{ flex: 1 }}><Text style={styles.fileName}>{item.name}</Text><Text style={styles.meta}>{formatSize(item.size)}</Text></View></View>
-            <Text style={styles.remarkLabel}>REMARK *</Text><TextInput style={styles.input} placeholder="Add a short note about this file" placeholderTextColor={Colors.textMuted}
-              accessibilityLabel={'Remark for ' + item.name} value={item.remark} onChangeText={text => updateRemark(item.id, text)} editable={!isUploading} maxLength={1000} />
-            <Button title="Remove from selection" color={Colors.error} variant="ghost" onPress={() => removeFile(item.id)} disabled={isUploading} /></View>)}
-          <Button title={isUploading ? 'Uploading your files…' : 'Upload ' + files.length + (files.length === 1 ? ' file' : ' files')} onPress={uploadFiles} disabled={isUploading || deletingId !== null} />
-        </View>}
-        <View style={styles.libraryHeading}><SectionTitle title="Document library" detail={uploadedFiles.length + ' FILES'} /></View>
-      </>}
-      ListEmptyComponent={isLoading ? <ActivityIndicator color={Colors.primary} style={{ marginVertical: 30 }} /> : <EmptyState icon="folder" title="Make room for good work" message="Your uploaded documents will appear here. Choose a file above to get started." />}
-      renderItem={({ item }) => <View style={styles.fileCard}><View style={styles.fileTop}><View style={styles.typeBadge}><Text style={styles.typeText}>{(item.fileFormat || item.fileName.split('.').pop() || 'FILE').toUpperCase().replace('.', '')}</Text></View>
-        <View style={{ flex: 1 }}><Text style={styles.fileName}>{item.fileName}</Text><Text style={styles.meta}>{formatSize(item.fileSize)} · {formatDate(item.uploadedAt)}</Text></View></View>
-        <View style={styles.remarkBox}><Text style={styles.remarkLabel}>NOTE</Text><Text style={styles.remarkText}>{item.remark || 'No remark provided.'}</Text></View>
-        <View style={styles.actions}><View style={{ flex: 1 }}><Button title="Open document" variant="secondary" onPress={() => void openUploadedFile(item.fileUrl)} disabled={deletingId === item.id} /></View>
-          <View style={{ flex: 1 }}><Button title={deletingId === item.id ? 'Deleting…' : 'Delete'} variant="ghost" color={Colors.error} onPress={() => confirmDelete(item)} disabled={deletingId !== null || isUploading || isRefreshing} /></View></View>
-      </View>}
-      ListFooterComponent={<Button title="Refresh library" variant="ghost" onPress={() => void loadUploadedFiles(true)} disabled={isLoading || isRefreshing || deletingId !== null} />} />
-  </View>;
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={uploadedFiles}
+        keyExtractor={(item) => String(item.id)}
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={() => void loadUploadedFiles(true)}
+            tintColor={Colors.primary}
+          />
+        }
+        ListHeaderComponent={
+          <>
+            <ScreenHeading
+              eyebrow="WORKSPACE / DOCUMENTS"
+              title="Files & documents"
+              subtitle="Keep your work organised and within reach."
+            />
+            <View style={styles.uploadPanel}>
+              <View style={styles.uploadIcon}>
+                <AppIcon name="folder" size={28} />
+              </View>
+              <Text style={styles.uploadTitle}>A place for your important files</Text>
+              <Text style={styles.help}>
+                PDF, JPG, PNG or DOCX · Up to 5 MB each{'\n'}Choose up to 5 files per
+                upload.
+              </Text>
+              <Button
+                title="+  Choose files"
+                onPress={pickFiles}
+                disabled={isUploading || deletingId !== null || files.length >= MAX_FILES}
+              />
+            </View>
+            {!!files.length && (
+              <View style={{ marginTop: 24 }}>
+                <SectionTitle
+                  title="Ready to upload"
+                  detail={files.length + ' SELECTED'}
+                />
+                {files.map((item) => (
+                  <View style={styles.fileCard} key={item.id}>
+                    <View style={styles.fileTop}>
+                      <View style={styles.typeBadge}>
+                        <Text style={styles.typeText}>
+                          {item.name.split('.').pop()?.toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.fileName}>{item.name}</Text>
+                        <Text style={styles.meta}>{formatSize(item.size)}</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.remarkLabel}>REMARK *</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Add a short note about this file"
+                      placeholderTextColor={Colors.textMuted}
+                      accessibilityLabel={'Remark for ' + item.name}
+                      value={item.remark}
+                      onChangeText={(text) => updateRemark(item.id, text)}
+                      editable={!isUploading}
+                      maxLength={1000}
+                    />
+                    <Button
+                      title="Remove from selection"
+                      color={Colors.error}
+                      variant="ghost"
+                      onPress={() => removeFile(item.id)}
+                      disabled={isUploading}
+                    />
+                  </View>
+                ))}
+                <Button
+                  title={
+                    isUploading
+                      ? 'Uploading your files…'
+                      : 'Upload ' +
+                        files.length +
+                        (files.length === 1 ? ' file' : ' files')
+                  }
+                  onPress={uploadFiles}
+                  disabled={isUploading || deletingId !== null}
+                />
+              </View>
+            )}
+            <View style={styles.libraryHeading}>
+              <SectionTitle
+                title="Document library"
+                detail={uploadedFiles.length + ' FILES'}
+              />
+            </View>
+          </>
+        }
+        ListEmptyComponent={
+          isLoading ? (
+            <ActivityIndicator color={Colors.primary} style={{ marginVertical: 30 }} />
+          ) : (
+            <EmptyState
+              icon="folder"
+              title="Make room for good work"
+              message="Your uploaded documents will appear here. Choose a file above to get started."
+            />
+          )
+        }
+        renderItem={({ item }) => (
+          <View style={styles.fileCard}>
+            <View style={styles.fileTop}>
+              <View style={styles.typeBadge}>
+                <Text style={styles.typeText}>
+                  {(item.fileFormat || item.fileName.split('.').pop() || 'FILE')
+                    .toUpperCase()
+                    .replace('.', '')}
+                </Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.fileName}>{item.fileName}</Text>
+                <Text style={styles.meta}>
+                  {formatSize(item.fileSize)} · {formatDate(item.uploadedAt)}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.remarkBox}>
+              <Text style={styles.remarkLabel}>NOTE</Text>
+              <Text style={styles.remarkText}>
+                {item.remark || 'No remark provided.'}
+              </Text>
+            </View>
+            <View style={styles.actions}>
+              <View style={{ flex: 1 }}>
+                <Button
+                  title="Open document"
+                  variant="secondary"
+                  onPress={() => void openUploadedFile(item.fileUrl)}
+                  disabled={deletingId === item.id}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Button
+                  title={deletingId === item.id ? 'Deleting…' : 'Delete'}
+                  variant="ghost"
+                  color={Colors.error}
+                  onPress={() => confirmDelete(item)}
+                  disabled={deletingId !== null || isUploading || isRefreshing}
+                />
+              </View>
+            </View>
+          </View>
+        )}
+        ListFooterComponent={
+          <Button
+            title="Refresh library"
+            variant="ghost"
+            onPress={() => void loadUploadedFiles(true)}
+            disabled={isLoading || isRefreshing || deletingId !== null}
+          />
+        }
+      />
+    </View>
+  );
 };
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background }, content: { ...Layout.page, gap: 0, flexGrow: 1 },
-  uploadPanel: { backgroundColor: Colors.primarySoft, borderColor: '#B8DCD1', borderWidth: 1, borderStyle: 'dashed', borderRadius: 22, padding: 24, alignItems: 'stretch' },
-  uploadIcon: { width: 58, height: 58, borderRadius: 20, backgroundColor: Colors.card, alignSelf: 'center', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  uploadTitle: { color: Colors.textDark, fontWeight: '700', textAlign: 'center', fontSize: 17, lineHeight: 24 }, help: { color: Colors.textMuted, fontSize: 11, lineHeight: 20, textAlign: 'center', marginTop: 8, marginBottom: 14 },
-  libraryHeading: { marginTop: 28 }, fileCard: { ...Layout.card, padding: 18, marginBottom: 14 }, fileTop: { flexDirection: 'row', alignItems: 'center', gap: 12 }, typeBadge: { minWidth: 46, height: 48, borderRadius: 14, backgroundColor: Colors.accentSoft, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 7 },
-  typeText: { color: Colors.accent, fontSize: 10, fontWeight: '800' }, fileName: { fontSize: 14, fontWeight: '700', color: Colors.textDark, lineHeight: 21 }, meta: { fontSize: 10, color: Colors.textMuted, marginTop: 5, lineHeight: 17 },
-  remarkBox: { padding: 12, backgroundColor: Colors.surface, borderRadius: 12, marginTop: 16 }, remarkLabel: { fontSize: 9, color: Colors.textMuted, fontWeight: '700', letterSpacing: 1, marginTop: 12, marginBottom: 6 }, remarkText: { fontSize: 12, color: Colors.textDark, lineHeight: 20 },
-  input: { ...Layout.input, marginTop: 3 }, actions: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  container: { flex: 1, backgroundColor: Colors.background },
+  content: { ...Layout.page, gap: 0, flexGrow: 1 },
+  uploadPanel: {
+    backgroundColor: Colors.primarySoft,
+    borderColor: '#B8DCD1',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: 22,
+    padding: 24,
+    alignItems: 'stretch',
+  },
+  uploadIcon: {
+    width: 58,
+    height: 58,
+    borderRadius: 20,
+    backgroundColor: Colors.card,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  uploadTitle: {
+    color: Colors.textDark,
+    fontWeight: '700',
+    textAlign: 'center',
+    fontSize: 17,
+    lineHeight: 24,
+  },
+  help: {
+    color: Colors.textMuted,
+    fontSize: 11,
+    lineHeight: 20,
+    textAlign: 'center',
+    marginTop: 8,
+    marginBottom: 14,
+  },
+  libraryHeading: { marginTop: 28 },
+  fileCard: { ...Layout.card, padding: 18, marginBottom: 14 },
+  fileTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  typeBadge: {
+    minWidth: 46,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: Colors.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 7,
+  },
+  typeText: { color: Colors.accent, fontSize: 10, fontWeight: '800' },
+  fileName: { fontSize: 14, fontWeight: '700', color: Colors.textDark, lineHeight: 21 },
+  meta: { fontSize: 10, color: Colors.textMuted, marginTop: 5, lineHeight: 17 },
+  remarkBox: {
+    padding: 12,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    marginTop: 16,
+  },
+  remarkLabel: {
+    fontSize: 9,
+    color: Colors.textMuted,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  remarkText: { fontSize: 12, color: Colors.textDark, lineHeight: 20 },
+  input: { ...Layout.input, marginTop: 3 },
+  actions: { flexDirection: 'row', gap: 8, marginTop: 4 },
 });

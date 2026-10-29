@@ -1,30 +1,39 @@
+// Notification permissions, device registration and foreground notification handling.
 import { getNativeNotifications } from './nativeNotifications';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { notificationTaskId } from './notificationTarget';
 
 let foregroundAccount: { id: number; employeeId: number | null } | null = null;
-export function setNotificationAccount(user: { id: number; employeeId: number | null } | null) {
+export function setNotificationAccount(
+  user: { id: number; employeeId: number | null } | null,
+) {
   foregroundAccount = user;
 }
 
 getNativeNotifications()?.setNotificationHandler({
-  handleNotification: async notification => ({
-    shouldShowBanner: notificationTaskId(notification.request.content.data, foregroundAccount) !== null,
-    shouldShowList: notificationTaskId(notification.request.content.data, foregroundAccount) !== null,
-    shouldPlaySound: notificationTaskId(notification.request.content.data, foregroundAccount) !== null,
+  handleNotification: async (notification) => ({
+    shouldShowBanner:
+      notificationTaskId(notification.request.content.data, foregroundAccount) !== null,
+    shouldShowList:
+      notificationTaskId(notification.request.content.data, foregroundAccount) !== null,
+    shouldPlaySound:
+      notificationTaskId(notification.request.content.data, foregroundAccount) !== null,
     shouldSetBadge: false,
   }),
 });
 
-export async function registerForPushNotificationsAsync(askPermission = true):
-  Promise<string | null> {
+export async function registerForPushNotificationsAsync(
+  askPermission = true,
+): Promise<string | null> {
   if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
     return null;
   }
   const Notifications = getNativeNotifications();
   if (!Notifications) {
-    throw new Error('Task push notifications require the updated APK or a development build.');
+    throw new Error(
+      'Task push notifications require the updated APK or a development build.',
+    );
   }
 
   if (Platform.OS === 'android') {
@@ -35,14 +44,12 @@ export async function registerForPushNotificationsAsync(askPermission = true):
     });
   }
 
-  const existingPermission =
-    await Notifications.getPermissionsAsync();
+  const existingPermission = await Notifications.getPermissionsAsync();
 
   let status = existingPermission.status;
 
   if (status !== 'granted' && askPermission && existingPermission.canAskAgain) {
-    const requestedPermission =
-      await Notifications.requestPermissionsAsync();
+    const requestedPermission = await Notifications.requestPermissionsAsync();
 
     status = requestedPermission.status;
   }
@@ -52,8 +59,7 @@ export async function registerForPushNotificationsAsync(askPermission = true):
   }
 
   const projectId =
-    Constants.expoConfig?.extra?.eas?.projectId ??
-    Constants.easConfig?.projectId;
+    Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
 
   if (!projectId) {
     throw new Error('Expo project ID is missing.');

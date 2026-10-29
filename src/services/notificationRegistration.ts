@@ -1,3 +1,4 @@
+// Signed-in account token tho device push registration connect chesthundi.
 import { create } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
@@ -22,15 +23,21 @@ export function createNotificationRegistration(onStatus: (message: string) => vo
       return { userId: user.id as number, accessToken };
     },
     readToken: () => SecureStore.getItemAsync(key),
-    writeToken: token => token ? SecureStore.setItemAsync(key, token) : SecureStore.deleteItemAsync(key),
+    writeToken: (token) =>
+      token ? SecureStore.setItemAsync(key, token) : SecureStore.deleteItemAsync(key),
     register: async (pushToken, session) => {
-      await registrationApi.post('/push-tokens', { pushToken, platform: Platform.OS }, {
-        headers: { Authorization: `Bearer ${session.accessToken}` },
-      });
+      await registrationApi.post(
+        '/push-tokens',
+        { pushToken, platform: Platform.OS },
+        {
+          headers: { Authorization: `Bearer ${session.accessToken}` },
+        },
+      );
     },
     unregister: async (pushToken, session) => {
       await registrationApi.delete('/push-tokens', {
-        data: { pushToken }, headers: { Authorization: `Bearer ${session.accessToken}` },
+        data: { pushToken },
+        headers: { Authorization: `Bearer ${session.accessToken}` },
       });
     },
     onStatus,

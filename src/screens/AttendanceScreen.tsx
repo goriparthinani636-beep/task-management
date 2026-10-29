@@ -1,3 +1,4 @@
+// Attendance page: office location check, selfie capture, then check-in submit.
 import { AppIcon } from '../components/AppIcon';
 import { ScreenHeading, SectionTitle } from '../components/ScreenUI';
 import { Layout } from '../theme/layout';
@@ -19,19 +20,27 @@ import { useFocusEffect } from 'expo-router';
 import { useAppSelector } from '../store/hooks';
 import { selectCurrentUser } from '../store/authSlice';
 import { api } from '../services/api';
-import { AttendanceError, getAttendanceOffice, getAttendanceLocation, type Office } from '../services/attendanceLocation';
+import {
+  AttendanceError,
+  getAttendanceOffice,
+  getAttendanceLocation,
+  type Office,
+} from '../services/attendanceLocation';
 
-type AttendanceRecord = { id: number; employeeId: number; employeeName: string; checkedInAt: string; workDate: string };
+type AttendanceRecord = {
+  id: number;
+  employeeId: number;
+  employeeName: string;
+  checkedInAt: string;
+  workDate: string;
+};
 
 type AttendanceLocation = {
   latitude: number;
   longitude: number;
 };
 
-function getDistanceInMeters(
-  pointA: AttendanceLocation,
-  pointB: AttendanceLocation,
-) {
+function getDistanceInMeters(pointA: AttendanceLocation, pointB: AttendanceLocation) {
   const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
   const earthRadius = 6371000;
 
@@ -41,16 +50,9 @@ function getDistanceInMeters(
   const lat2 = toRadians(pointB.latitude);
 
   const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) *
-      Math.cos(lat2) *
-      Math.sin(dLon / 2) ** 2;
+    Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
 
-  return (
-    earthRadius *
-    2 *
-    Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  );
+  return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 export default function AttendanceScreen() {
@@ -61,17 +63,23 @@ export default function AttendanceScreen() {
   const [historyError, setHistoryError] = useState('');
   const [photo, setPhoto] = useState<string | null>(null);
   const loadHistory = useCallback(async () => {
-    try { setRecords((await api.get('/attendance')).data); setHistoryError(''); }
-    catch { setHistoryError('Could not load attendance history.'); }
+    try {
+      setRecords((await api.get('/attendance')).data);
+      setHistoryError('');
+    } catch {
+      setHistoryError('Could not load attendance history.');
+    }
   }, []);
-  useFocusEffect(useCallback(() => { void loadHistory(); }, [loadHistory]));
+  useFocusEffect(
+    useCallback(() => {
+      void loadHistory();
+    }, [loadHistory]),
+  );
   const cameraRef = useRef<CameraView>(null);
 
-  const [cameraPermission, requestCameraPermission] =
-    useCameraPermissions();
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
-  const [, setLocation] =
-    useState<AttendanceLocation | null>(null);
+  const [, setLocation] = useState<AttendanceLocation | null>(null);
 
   const [selfieUri, setSelfieUri] = useState<string | null>(null);
   const [showCamera, setShowCamera] = useState(false);
@@ -94,10 +102,7 @@ export default function AttendanceScreen() {
         longitude: configuredOffice.longitude,
       };
 
-      const meters = getDistanceInMeters(
-        currentLocation,
-        companyLocation,
-      );
+      const meters = getDistanceInMeters(currentLocation, companyLocation);
 
       setLocation(currentLocation);
       setDistance(meters);
@@ -131,10 +136,20 @@ export default function AttendanceScreen() {
     try {
       const allowed = await checkLocation();
       if (!allowed) return;
-      const permission = cameraPermission?.granted ? cameraPermission : await requestCameraPermission();
-      if (!permission.granted) { Alert.alert('Camera permission required', 'Allow camera access to capture your selfie.'); return; }
+      const permission = cameraPermission?.granted
+        ? cameraPermission
+        : await requestCameraPermission();
+      if (!permission.granted) {
+        Alert.alert(
+          'Camera permission required',
+          'Allow camera access to capture your selfie.',
+        );
+        return;
+      }
       setShowCamera(true);
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const captureSelfie = async () => {
@@ -166,7 +181,10 @@ export default function AttendanceScreen() {
       setShowCamera(false);
     } catch (error) {
       console.error('Selfie capture failed:', error);
-      Alert.alert('Selfie capture failed', 'Unable to capture your selfie. Please try again.');
+      Alert.alert(
+        'Selfie capture failed',
+        'Unable to capture your selfie. Please try again.',
+      );
     } finally {
       setLoading(false);
     }
@@ -175,7 +193,10 @@ export default function AttendanceScreen() {
   const submitAttendance = async () => {
     if (loading) return;
     if (!selfieUri) {
-      Alert.alert('Selfie required', 'Please capture a selfie before submitting attendance.');
+      Alert.alert(
+        'Selfie required',
+        'Please capture a selfie before submitting attendance.',
+      );
       return;
     }
 
@@ -191,19 +212,18 @@ export default function AttendanceScreen() {
 
       const formData = new FormData();
 
-      formData.append(
-        'selfie',
-        {
-          uri: selfieUri,
-          name: `attendance-${Date.now()}.jpg`,
-          type: 'image/jpeg',
-        } as unknown as Blob,
-      );
+      formData.append('selfie', {
+        uri: selfieUri,
+        name: `attendance-${Date.now()}.jpg`,
+        type: 'image/jpeg',
+      } as unknown as Blob);
 
       formData.append('latitude', String(allowed.latitude));
       formData.append('longitude', String(allowed.longitude));
 
-      await api.post('/attendance', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await api.post('/attendance', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       await loadHistory();
 
       Alert.alert('Success', 'Attendance submitted successfully.');
@@ -226,11 +246,7 @@ export default function AttendanceScreen() {
   if (showCamera) {
     return (
       <View style={styles.cameraContainer}>
-        <CameraView
-          ref={cameraRef}
-          style={styles.camera}
-          facing="front"
-        />
+        <CameraView ref={cameraRef} style={styles.camera} facing="front" />
 
         <View style={styles.cameraActions}>
           <TouchableOpacity
@@ -251,11 +267,7 @@ export default function AttendanceScreen() {
         </View>
 
         {loading && (
-          <ActivityIndicator
-            size="large"
-            color="#ffffff"
-            style={styles.loader}
-          />
+          <ActivityIndicator size="large" color="#ffffff" style={styles.loader} />
         )}
       </View>
     );
@@ -263,99 +275,211 @@ export default function AttendanceScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <ScreenHeading eyebrow="WORKSPACE / ATTENDANCE" title="Make today count" subtitle="A quick location check. A selfie. You’re checked in." />
-      {(!isManager || user?.employeeId) && <View style={styles.steps}>{[['pin', 'Location'], ['camera', 'Selfie'], ['check', 'Check in']].map(([icon, label], index) => <View key={label} style={styles.step}><View style={[styles.stepIcon, index < (selfieUri ? 3 : distance !== null ? 2 : 1) && { backgroundColor: Colors.primarySoft }]}><AppIcon name={icon as 'pin' | 'camera' | 'check'} size={19} /></View><Text style={styles.stepText}>0{index + 1}  {label}</Text></View>)}</View>}
-
-      {(!isManager || user?.employeeId) && <>
-      <View style={styles.infoCard}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}><AppIcon name="shield" size={19} /><Text style={styles.cardEyebrow}>OFFICE CHECK-IN</Text></View><Text style={styles.infoLabel}>Allowed radius</Text>
-        <Text style={styles.infoValue}>{office ? `${office.radiusMeters} metres` : 'Office boundary checked when marking attendance'}</Text>
-
-        {distance !== null && (
-          <>
-            <Text style={styles.infoLabel}>Distance from company</Text>
-            <Text style={styles.infoValue}>
-              {Math.round(distance)} metres
-            </Text>
-
-            <Text
-              style={[
-                styles.status,
-                distance <= (office?.radiusMeters ?? 500)
-                  ? styles.allowed
-                  : styles.denied,
-              ]}
-            >
-              {distance <= (office?.radiusMeters ?? 500)
-                ? 'Within allowed area'
-                : 'Outside allowed area'}
-            </Text>
-          </>
-        )}
-      </View>
-
-      {selfieUri && (
-        <View style={styles.previewContainer}>
-          <Image
-            source={{ uri: selfieUri }}
-            style={styles.preview}
-          />
-          <Text style={styles.previewLabel}>Selfie captured</Text>
+      <ScreenHeading
+        eyebrow="WORKSPACE / ATTENDANCE"
+        title="Make today count"
+        subtitle="A quick location check. A selfie. You’re checked in."
+      />
+      {(!isManager || user?.employeeId) && (
+        <View style={styles.steps}>
+          {[
+            ['pin', 'Location'],
+            ['camera', 'Selfie'],
+            ['check', 'Check in'],
+          ].map(([icon, label], index) => (
+            <View key={label} style={styles.step}>
+              <View
+                style={[
+                  styles.stepIcon,
+                  index < (selfieUri ? 3 : distance !== null ? 2 : 1) && {
+                    backgroundColor: Colors.primarySoft,
+                  },
+                ]}
+              >
+                <AppIcon name={icon as 'pin' | 'camera' | 'check'} size={19} />
+              </View>
+              <Text style={styles.stepText}>
+                0{index + 1} {label}
+              </Text>
+            </View>
+          ))}
         </View>
       )}
 
+      {(!isManager || user?.employeeId) && (
+        <>
+          <View style={styles.infoCard}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                marginBottom: 8,
+              }}
+            >
+              <AppIcon name="shield" size={19} />
+              <Text style={styles.cardEyebrow}>OFFICE CHECK-IN</Text>
+            </View>
+            <Text style={styles.infoLabel}>Allowed radius</Text>
+            <Text style={styles.infoValue}>
+              {office
+                ? `${office.radiusMeters} metres`
+                : 'Office boundary checked when marking attendance'}
+            </Text>
+
+            {distance !== null && (
+              <>
+                <Text style={styles.infoLabel}>Distance from company</Text>
+                <Text style={styles.infoValue}>{Math.round(distance)} metres</Text>
+
+                <Text
+                  style={[
+                    styles.status,
+                    distance <= (office?.radiusMeters ?? 500)
+                      ? styles.allowed
+                      : styles.denied,
+                  ]}
+                >
+                  {distance <= (office?.radiusMeters ?? 500)
+                    ? 'Within allowed area'
+                    : 'Outside allowed area'}
+                </Text>
+              </>
+            )}
+          </View>
+
+          {selfieUri && (
+            <View style={styles.previewContainer}>
+              <Image source={{ uri: selfieUri }} style={styles.preview} />
+              <Text style={styles.previewLabel}>Selfie captured</Text>
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={startAttendance}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>Check Location & Take Selfie</Text>
+          </TouchableOpacity>
+
+          {selfieUri && (
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={submitAttendance}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>Submit Attendance</Text>
+            </TouchableOpacity>
+          )}
+        </>
+      )}
+      <View style={{ marginTop: 28 }}>
+        <SectionTitle
+          title={isManager ? 'Team attendance' : 'My check-ins'}
+          detail={records.length + ' RECORDS'}
+        />
+      </View>
       <TouchableOpacity
-        style={styles.primaryButton}
-        onPress={startAttendance}
-        disabled={loading}
+        accessibilityRole="button"
+        onPress={loadHistory}
+        style={styles.refreshLink}
       >
-        <Text style={styles.buttonText}>
-          Check Location & Take Selfie
+        <Text style={{ color: Colors.primary, fontSize: 12, fontWeight: '700' }}>
+          Refresh check-ins
         </Text>
       </TouchableOpacity>
-
-      {selfieUri && (
-        <TouchableOpacity
-          style={styles.submitButton}
-          onPress={submitAttendance}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>Submit Attendance</Text>
+      {historyError ? (
+        <Text>{historyError}</Text>
+      ) : records.length === 0 ? (
+        <Text>No attendance recorded yet.</Text>
+      ) : null}
+      {records.map((record) => (
+        <View style={styles.historyCard} key={record.id}>
+          <View
+            style={{
+              flexDirection: 'row',
+              gap: 8,
+              alignItems: 'center',
+              marginBottom: 10,
+            }}
+          >
+            <AppIcon name="check" size={18} />
+            <Text style={{ fontWeight: '700', color: Colors.textDark, flex: 1 }}>
+              {record.employeeName}
+            </Text>
+            <Text style={{ color: Colors.textMuted, fontSize: 11 }}>
+              #{record.employeeId}
+            </Text>
+          </View>
+          <Text style={{ color: Colors.textMuted, fontSize: 12, marginBottom: 10 }}>
+            {record.workDate} · {new Date(record.checkedInAt).toLocaleTimeString()}
+          </Text>
+          <TouchableOpacity
+            onPress={async () => {
+              try {
+                setPhoto(
+                  (await api.get('/attendance/' + record.id + '/selfie')).data.dataUri,
+                );
+              } catch {
+                Alert.alert('Error', 'Unable to load attendance selfie.');
+              }
+            }}
+          >
+            <Text
+              style={{
+                color: Colors.primary,
+                fontWeight: '700',
+                fontSize: 12,
+                paddingVertical: 10,
+              }}
+            >
+              View attendance selfie
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ))}
+      {photo && (
+        <TouchableOpacity onPress={() => setPhoto(null)}>
+          <Image source={{ uri: photo }} style={styles.preview} />
+          <Text>Close selfie</Text>
         </TouchableOpacity>
       )}
-
-      </>}
-      <View style={{ marginTop: 28 }}><SectionTitle title={isManager ? 'Team attendance' : 'My check-ins'} detail={records.length + ' RECORDS'} /></View>
-      <TouchableOpacity accessibilityRole="button" onPress={loadHistory} style={styles.refreshLink}><Text style={{ color: Colors.primary, fontSize: 12, fontWeight: '700' }}>Refresh check-ins</Text></TouchableOpacity>
-      {historyError ? <Text>{historyError}</Text> : records.length === 0 ? <Text>No attendance recorded yet.</Text> : null}
-      {records.map(record => <View style={styles.historyCard} key={record.id}>
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', marginBottom: 10 }}><AppIcon name="check" size={18} /><Text style={{ fontWeight: '700', color: Colors.textDark, flex: 1 }}>{record.employeeName}</Text><Text style={{ color: Colors.textMuted, fontSize: 11 }}>#{record.employeeId}</Text></View>
-        <Text style={{ color: Colors.textMuted, fontSize: 12, marginBottom: 10 }}>{record.workDate} · {new Date(record.checkedInAt).toLocaleTimeString()}</Text>
-        <TouchableOpacity onPress={async () => {
-          try { setPhoto((await api.get('/attendance/' + record.id + '/selfie')).data.dataUri); }
-          catch { Alert.alert('Error', 'Unable to load attendance selfie.'); }
-        }}><Text style={{ color: Colors.primary, fontWeight: '700', fontSize: 12, paddingVertical: 10 }}>View attendance selfie</Text></TouchableOpacity>
-      </View>)}
-      {photo && <TouchableOpacity onPress={() => setPhoto(null)}><Image source={{ uri: photo }} style={styles.preview} /><Text>Close selfie</Text></TouchableOpacity>}
       {loading && (
-        <ActivityIndicator
-          size="large"
-          color="#2563eb"
-          style={styles.loader}
-        />
+        <ActivityIndicator size="large" color="#2563eb" style={styles.loader} />
       )}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  steps: { flexDirection: 'row', gap: 10, marginBottom: 24 }, step: { flex: 1, alignItems: 'center', gap: 9 }, stepIcon: { width: 46, height: 46, backgroundColor: Colors.card, borderRadius: 16, alignItems: 'center', justifyContent: 'center' }, stepText: { color: Colors.textMuted, fontSize: 10, fontWeight: '600' }, cardEyebrow: { color: Colors.primary, fontWeight: '800', fontSize: 10, letterSpacing: 1.4 }, historyCard: { ...Layout.card, padding: 18, marginTop: 12 }, refreshLink: { alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center' },
+  steps: { flexDirection: 'row', gap: 10, marginBottom: 24 },
+  step: { flex: 1, alignItems: 'center', gap: 9 },
+  stepIcon: {
+    width: 46,
+    height: 46,
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepText: { color: Colors.textMuted, fontSize: 10, fontWeight: '600' },
+  cardEyebrow: {
+    color: Colors.primary,
+    fontWeight: '800',
+    fontSize: 10,
+    letterSpacing: 1.4,
+  },
+  historyCard: { ...Layout.card, padding: 18, marginTop: 12 },
+  refreshLink: { alignSelf: 'flex-start', minHeight: 40, justifyContent: 'center' },
   container: {
     flexGrow: 1,
     backgroundColor: Colors.background,
     padding: 20,
     paddingBottom: 36,
-    width: '100%', maxWidth: 1000, alignSelf: 'center',
+    width: '100%',
+    maxWidth: 1000,
+    alignSelf: 'center',
   },
   title: {
     fontSize: 26,
@@ -368,7 +492,8 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginBottom: 24,
   },
-  infoCard: { ...Layout.card,
+  infoCard: {
+    ...Layout.card,
     backgroundColor: Colors.card,
     padding: 20,
     borderRadius: 22,

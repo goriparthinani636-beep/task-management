@@ -1,3 +1,4 @@
+// Account change and logout madhya device token registration safe ga manage chesthundi.
 type Session = { userId: number; accessToken: string };
 type Dependencies = {
   getPushToken: (askPermission: boolean) => Promise<string | null>;
@@ -16,8 +17,14 @@ export function createPushDeviceSession(deps: Dependencies) {
   let generation = 0;
   let networkQueue: Promise<void> = Promise.resolve();
   let pending: { generation: number; promise: Promise<void> } | null = null;
-  const activate = (id: number) => { userId = id; generation++; };
-  const stop = () => { userId = null; generation++; };
+  const activate = (id: number) => {
+    userId = id;
+    generation++;
+  };
+  const stop = () => {
+    userId = null;
+    generation++;
+  };
   const sync = (askPermission = false): Promise<void> => {
     if (userId === null) return Promise.resolve();
     const epoch = generation;
@@ -30,30 +37,41 @@ export function createPushDeviceSession(deps: Dependencies) {
         if (!current()) return;
         const session = await deps.getSession();
         if (!current() || session.userId !== owner) return;
-        const operation = networkQueue.catch(() => {}).then(async () => {
-          if (!current()) return;
-          const previous = await deps.readToken();
-          if (!current()) return;
-          if (previous && previous !== pushToken) await deps.unregister(previous, session);
-          if (!current()) return;
-          if (!pushToken) {
-            await deps.writeToken(null);
-            if (current()) deps.onStatus('Notifications are off. Enable permission in your phone settings.');
-            return;
-          }
-          await deps.register(pushToken, session);
-          if (!current()) return;
-          await deps.writeToken(pushToken);
-          if (current()) deps.onStatus('Task notifications are enabled.');
-        });
+        const operation = networkQueue
+          .catch(() => {})
+          .then(async () => {
+            if (!current()) return;
+            const previous = await deps.readToken();
+            if (!current()) return;
+            if (previous && previous !== pushToken)
+              await deps.unregister(previous, session);
+            if (!current()) return;
+            if (!pushToken) {
+              await deps.writeToken(null);
+              if (current())
+                deps.onStatus(
+                  'Notifications are off. Enable permission in your phone settings.',
+                );
+              return;
+            }
+            await deps.register(pushToken, session);
+            if (!current()) return;
+            await deps.writeToken(pushToken);
+            if (current()) deps.onStatus('Task notifications are enabled.');
+          });
         networkQueue = operation;
         await operation;
       } catch {
-        if (current()) deps.onStatus('Notifications could not be registered. Check your connection and try again.');
+        if (current())
+          deps.onStatus(
+            'Notifications could not be registered. Check your connection and try again.',
+          );
       }
     })();
     pending = { generation: epoch, promise };
-    void promise.finally(() => { if (pending?.promise === promise) pending = null; });
+    void promise.finally(() => {
+      if (pending?.promise === promise) pending = null;
+    });
     return promise;
   };
   return { activate, stop, sync };

@@ -1,3 +1,4 @@
+// Shared login state ikkada untundi. Passwords and tokens Redux lo store cheyyamu.
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { SessionUser } from '../services/employeeScope';
 
@@ -13,9 +14,14 @@ export interface AuthState {
 }
 
 const initialState: AuthState = {
-  user: null, isAuthenticated: false, isLoading: true,
-  isSigningIn: false, isLoggingOut: false, restoreStarted: false,
-  sessionVersion: 0, notificationStatus: 'Sign in to enable task notifications.',
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+  isSigningIn: false,
+  isLoggingOut: false,
+  restoreStarted: false,
+  sessionVersion: 0,
+  notificationStatus: 'Sign in to enable task notifications.',
 };
 
 const authSlice = createSlice({
@@ -50,7 +56,9 @@ const authSlice = createSlice({
     },
     sessionCleared(state) {
       Object.assign(state, initialState, {
-        sessionVersion: state.sessionVersion + 1, isLoading: false, restoreStarted: true,
+        sessionVersion: state.sessionVersion + 1,
+        isLoading: false,
+        restoreStarted: true,
       });
     },
     notificationStatusChanged(state, action: PayloadAction<string>) {
@@ -59,8 +67,13 @@ const authSlice = createSlice({
   },
 });
 
-export const { sessionStarted, loginSuccess, sessionFinished, sessionCleared,
-  notificationStatusChanged } = authSlice.actions;
+export const {
+  sessionStarted,
+  loginSuccess,
+  sessionFinished,
+  sessionCleared,
+  notificationStatusChanged,
+} = authSlice.actions;
 export const authReducer = authSlice.reducer;
 export type AuthRootState = { auth: AuthState };
 export const selectCurrentUser = (state: AuthRootState) => state.auth.user;

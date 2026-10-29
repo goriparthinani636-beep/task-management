@@ -12,11 +12,29 @@ interface Props {
   variant?: 'primary' | 'secondary' | 'ghost';
 }
 
-export const Button: React.FC<Props> = ({ title, onPress, loading, disabled, color, variant = 'primary' }) => {
-  const foreground = variant === 'primary' ? Colors.card : color ?? Colors.primary;
+export const Button: React.FC<Props> = ({
+  title,
+  onPress,
+  loading,
+  disabled,
+  color,
+  variant = 'primary',
+}) => {
+  const foreground = variant === 'primary' ? Colors.card : (color ?? Colors.primary);
   return (
     <TouchableOpacity
-      style={[styles.button, { backgroundColor: variant === 'ghost' ? 'transparent' : variant === 'secondary' ? Colors.primarySoft : color ?? Colors.primary }, disabled || loading ? styles.disabled : null]}
+      style={[
+        styles.button,
+        {
+          backgroundColor:
+            variant === 'ghost'
+              ? 'transparent'
+              : variant === 'secondary'
+                ? Colors.primarySoft
+                : (color ?? Colors.primary),
+        },
+        disabled || loading ? styles.disabled : null,
+      ]}
       accessibilityRole="button"
       accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
       onPress={onPress}

@@ -1,3 +1,4 @@
+// Redux store create chesi auth reducer and required services connect chesthundi.
 import { configureStore } from '@reduxjs/toolkit';
 import { authReducer } from './authSlice';
 import type { AuthDependencies } from './authOperations';
@@ -6,7 +7,8 @@ import type { AuthDependencies } from './authOperations';
 export function createAppStore(services: AuthDependencies) {
   return configureStore({
     reducer: { auth: authReducer },
-    middleware: getDefaultMiddleware => getDefaultMiddleware({ thunk: { extraArgument: services } }),
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({ thunk: { extraArgument: services } }),
     devTools: process.env.NODE_ENV !== 'production',
   });
 }

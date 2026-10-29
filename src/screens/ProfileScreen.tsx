@@ -1,3 +1,4 @@
+// Profile page: account details, notification status and password change.
 import { AppIcon } from '../components/AppIcon';
 import { ScreenHeading } from '../components/ScreenUI';
 import { Button } from '../components/Button';
@@ -42,11 +43,17 @@ export const ProfileScreen = () => {
   const emailText: string = currentUser?.email || '';
   const roleText: string = currentUser?.role || '';
   const initial: string = emailText ? emailText[0].toUpperCase() : 'A';
-  const displayName: string = currentUser?.name || emailText.split('@')[0] || 'My account';
+  const displayName: string =
+    currentUser?.name || emailText.split('@')[0] || 'My account';
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={Layout.page}>
-      <ScreenHeading compact eyebrow="YOUR WORKSPACE" title="My account" subtitle="Your identity, preferences and security." />
+      <ScreenHeading
+        compact
+        eyebrow="YOUR WORKSPACE"
+        title="My account"
+        subtitle="Your identity, preferences and security."
+      />
       <View style={styles.profileCard}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>
@@ -59,7 +66,20 @@ export const ProfileScreen = () => {
         </View>
       </View>
 
-      {user?.role === 'Manager' && <Link href="/accounts" style={{ padding: 18, borderRadius: 14, backgroundColor: Colors.primarySoft, color: Colors.primary, fontWeight: '700' }}>Manage login accounts</Link>}
+      {user?.role === 'Manager' && (
+        <Link
+          href="/accounts"
+          style={{
+            padding: 18,
+            borderRadius: 14,
+            backgroundColor: Colors.primarySoft,
+            color: Colors.primary,
+            fontWeight: '700',
+          }}
+        >
+          Manage login accounts
+        </Link>
+      )}
       {/* Account Details Section */}
       <View style={styles.sectionCard}>
         <Text style={styles.sectionTitle}>Account details</Text>
@@ -83,25 +103,69 @@ export const ProfileScreen = () => {
       </View>
 
       <View style={styles.sectionCard}>
-        <View style={{ flexDirection: 'row', gap: 10 }}><AppIcon name="shield" size={19} /><Text style={styles.sectionTitle}>Account security</Text></View><Text style={styles.sectionHelp}>Use a password you do not use anywhere else.</Text>
-        <TextInput placeholder="Current password" accessibilityLabel="Current password" secureTextEntry value={currentPassword} onChangeText={setCurrentPassword} autoCapitalize="none" style={[Layout.input, { marginBottom: 12 }]} />
-        <TextInput placeholder="New password (6+ characters)" accessibilityLabel="New password" secureTextEntry value={newPassword} onChangeText={setNewPassword} autoCapitalize="none" style={Layout.input} />
-        <Button title={saving ? 'Saving…' : 'Change password'} disabled={saving} onPress={async () => {
-          if (saving) return;
-          setSaving(true);
-          try {
-            await api.post('/auth/change-password', { currentPassword, newPassword });
-            setCurrentPassword(''); setNewPassword('');
-            Alert.alert('Password changed', 'Please sign in using your new password.');
-            await logout();
-          } catch (error: any) { Alert.alert('Password change failed', error?.response?.data?.message ?? 'Please try again.'); }
-          finally { setSaving(false); }
-        }} />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <AppIcon name="shield" size={19} />
+          <Text style={styles.sectionTitle}>Account security</Text>
+        </View>
+        <Text style={styles.sectionHelp}>
+          Use a password you do not use anywhere else.
+        </Text>
+        <TextInput
+          placeholder="Current password"
+          accessibilityLabel="Current password"
+          secureTextEntry
+          value={currentPassword}
+          onChangeText={setCurrentPassword}
+          autoCapitalize="none"
+          style={[Layout.input, { marginBottom: 12 }]}
+        />
+        <TextInput
+          placeholder="New password (6+ characters)"
+          accessibilityLabel="New password"
+          secureTextEntry
+          value={newPassword}
+          onChangeText={setNewPassword}
+          autoCapitalize="none"
+          style={Layout.input}
+        />
+        <Button
+          title={saving ? 'Saving…' : 'Change password'}
+          disabled={saving}
+          onPress={async () => {
+            if (saving) return;
+            setSaving(true);
+            try {
+              await api.post('/auth/change-password', { currentPassword, newPassword });
+              setCurrentPassword('');
+              setNewPassword('');
+              Alert.alert('Password changed', 'Please sign in using your new password.');
+              await logout();
+            } catch (error: any) {
+              Alert.alert(
+                'Password change failed',
+                error?.response?.data?.message ?? 'Please try again.',
+              );
+            } finally {
+              setSaving(false);
+            }
+          }}
+        />
       </View>
       <View style={styles.sectionCard}>
-        <View style={{ flexDirection: 'row', gap: 10 }}><AppIcon name="bell" size={19} /><Text style={styles.sectionTitle}>Stay in the loop</Text></View>
-        <Text style={{ marginBottom: 12, color: Colors.textMuted, lineHeight: 22 }}>{notificationStatus}</Text>
-        <Button variant="secondary" title="Enable / retry notifications" onPress={() => { void retryNotifications(); }} />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <AppIcon name="bell" size={19} />
+          <Text style={styles.sectionTitle}>Stay in the loop</Text>
+        </View>
+        <Text style={{ marginBottom: 12, color: Colors.textMuted, lineHeight: 22 }}>
+          {notificationStatus}
+        </Text>
+        <Button
+          variant="secondary"
+          title="Enable / retry notifications"
+          onPress={() => {
+            void retryNotifications();
+          }}
+        />
       </View>
       {/* Logout Action */}
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
@@ -112,12 +176,18 @@ export const ProfileScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  sectionHelp: { color: Colors.textMuted, fontSize: 12, lineHeight: 20, marginBottom: 16 },
+  sectionHelp: {
+    color: Colors.textMuted,
+    fontSize: 12,
+    lineHeight: 20,
+    marginBottom: 16,
+  },
   container: {
     flex: 1,
     backgroundColor: Colors.background,
   },
-  profileCard: { ...Layout.card,
+  profileCard: {
+    ...Layout.card,
     backgroundColor: Colors.ink,
     borderRadius: 18,
     padding: 24,
@@ -165,7 +235,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  sectionCard: { ...Layout.card,
+  sectionCard: {
+    ...Layout.card,
     backgroundColor: Colors.card,
     borderRadius: 18,
     padding: 20,

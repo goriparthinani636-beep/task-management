@@ -1,3 +1,4 @@
+// Employee directory: list, search and manager employee forms ikkada untayi.
 import { AppIcon } from '../components/AppIcon';
 import { ScreenHeading, SearchField, EmptyState } from '../components/ScreenUI';
 import { Layout } from '../theme/layout';
@@ -44,40 +45,55 @@ export const EmployeesScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   // Add/Edit modal
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingEmployee, setEditingEmployee] =
-    useState<Employee | null>(null);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [removingResume, setRemovingResume] = useState(false);
   const resumeRemoval = useRef(false);
   const confirmRemoveResume = (employee: Employee) => {
-    Alert.alert('Remove resume?', 'Remove this resume from the employee profile? The employee details are kept. To permanently delete the uploaded file, use Delete File in File Uploads afterward.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: async () => {
-        if (resumeRemoval.current) return;
-        resumeRemoval.current = true;
-        setRemovingResume(true);
-        try {
-          const saved: Employee = await removeEmployeeResume(employee.id);
-          setEmployees(previous => previous.map(item => item.id === saved.id ? saved : item));
-          setProfileEmployee(current => current?.id === saved.id ? saved : current);
-          if (editingEmployee?.id === saved.id) {
-            setResumeUrl('');
-            setResumeFileName('');
-            setPickedResume(null);
-          }
-          Alert.alert('Resume removed', 'The resume was removed from this employee.');
-        } catch (error: any) {
-          Alert.alert('Remove failed', error?.response?.data?.message ?? error?.message ?? 'Could not remove the resume. Please retry.');
-        } finally {
-          resumeRemoval.current = false;
-          setRemovingResume(false);
-        }
-      } },
-    ]);
+    Alert.alert(
+      'Remove resume?',
+      'Remove this resume from the employee profile? The employee details are kept. To permanently delete the uploaded file, use Delete File in File Uploads afterward.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            if (resumeRemoval.current) return;
+            resumeRemoval.current = true;
+            setRemovingResume(true);
+            try {
+              const saved: Employee = await removeEmployeeResume(employee.id);
+              setEmployees((previous) =>
+                previous.map((item) => (item.id === saved.id ? saved : item)),
+              );
+              setProfileEmployee((current) =>
+                current?.id === saved.id ? saved : current,
+              );
+              if (editingEmployee?.id === saved.id) {
+                setResumeUrl('');
+                setResumeFileName('');
+                setPickedResume(null);
+              }
+              Alert.alert('Resume removed', 'The resume was removed from this employee.');
+            } catch (error: any) {
+              Alert.alert(
+                'Remove failed',
+                error?.response?.data?.message ??
+                  error?.message ??
+                  'Could not remove the resume. Please retry.',
+              );
+            } finally {
+              resumeRemoval.current = false;
+              setRemovingResume(false);
+            }
+          },
+        },
+      ],
+    );
   };
   // Employee profile
-  const [profileEmployee, setProfileEmployee] =
-    useState<Employee | null>(null);
+  const [profileEmployee, setProfileEmployee] = useState<Employee | null>(null);
   // Form fields
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -104,33 +120,36 @@ export const EmployeesScreen = () => {
       setRefreshing(false);
     }
   }, []);
-  useFocusEffect(useCallback(() => { void fetchEmployees(); }, [fetchEmployees]));
+  useFocusEffect(
+    useCallback(() => {
+      void fetchEmployees();
+    }, [fetchEmployees]),
+  );
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchEmployees();
   }, [fetchEmployees]);
-  const filterEmployees = (
-    data: Employee[],
-    text: string
-  ): Employee[] => {
+  const filterEmployees = (data: Employee[], text: string): Employee[] => {
     const query = text.trim().toLowerCase();
     if (!query) return data;
     return data.filter((emp) =>
-      [
-        emp.firstName,
-        emp.lastName,
-        emp.email,
-        emp.department,
-        emp.designation,
-      ].some((value) =>
-        (value || '').toLowerCase().includes(query)
-      )
+      [emp.firstName, emp.lastName, emp.email, emp.department, emp.designation].some(
+        (value) => (value || '').toLowerCase().includes(query),
+      ),
     );
   };
   const handleSearch = (text: string) => {
     setSearch(text);
   };
-  const filteredEmployees = useMemo(() => filterEmployees(employees, search).filter(employee => employeeStatus === 'All' || employee.status.toLowerCase() === employeeStatus.toLowerCase()), [employees, search, employeeStatus]);
+  const filteredEmployees = useMemo(
+    () =>
+      filterEmployees(employees, search).filter(
+        (employee) =>
+          employeeStatus === 'All' ||
+          employee.status.toLowerCase() === employeeStatus.toLowerCase(),
+      ),
+    [employees, search, employeeStatus],
+  );
   const resetForm = () => {
     setFirstName('');
     setLastName('');
@@ -181,7 +200,10 @@ export const EmployeesScreen = () => {
         setResumeFileName(file.name);
       }
     } catch (error) {
-      Alert.alert('Resume selection', error instanceof Error ? error.message : 'Unable to select the resume file.');
+      Alert.alert(
+        'Resume selection',
+        error instanceof Error ? error.message : 'Unable to select the resume file.',
+      );
     }
   };
   const uploadResume = async (): Promise<string> => {
@@ -189,14 +211,11 @@ export const EmployeesScreen = () => {
       return resumeUrl.trim();
     }
     const formData = new FormData();
-    formData.append(
-      'files',
-      {
-        uri: pickedResume.uri,
-        name: pickedResume.name,
-        type: pickedResume.mimeType ?? 'application/pdf',
-      } as any,
-    );
+    formData.append('files', {
+      uri: pickedResume.uri,
+      name: pickedResume.name,
+      type: pickedResume.mimeType ?? 'application/pdf',
+    } as any);
     formData.append('remarks', 'Employee resume');
     const response = await api.post('/FileUploads', formData, {
       headers: {
@@ -215,14 +234,14 @@ export const EmployeesScreen = () => {
       !department.trim() ||
       !designation.trim()
     ) {
-      Alert.alert(
-        'Validation',
-        'Please fill in all required fields.'
-      );
+      Alert.alert('Validation', 'Please fill in all required fields.');
       return;
     }
     if ((!editingEmployee || password) && password.length < 6) {
-      Alert.alert('Login password required', 'Enter an employee login password with at least 6 characters.');
+      Alert.alert(
+        'Login password required',
+        'Enter an employee login password with at least 6 characters.',
+      );
       return;
     }
     if (!pickedResume && resumeUrl.trim()) {
@@ -230,7 +249,7 @@ export const EmployeesScreen = () => {
       if (!validUrl) {
         Alert.alert(
           'Invalid Resume URL',
-          'Enter a valid URL beginning with https\:// or http\://.'
+          'Enter a valid URL beginning with https\:// or http\://.',
         );
         return;
       }
@@ -258,11 +277,19 @@ export const EmployeesScreen = () => {
         resumeUrl: savedResumeUrl ? fileUrl(savedResumeUrl) : null,
         resumeFileName: savedResumeFileName || null,
       };
-      const saved: Employee = await saveEmployee(payload, editingEmployee?.id, id => {
-        setEditingEmployee({ ...payload, id });
-        setPassword('');
-      }, password || undefined);
-      setEmployees(previous => [saved, ...previous.filter(emp => emp.id !== saved.id)]);
+      const saved: Employee = await saveEmployee(
+        payload,
+        editingEmployee?.id,
+        (id) => {
+          setEditingEmployee({ ...payload, id });
+          setPassword('');
+        },
+        password || undefined,
+      );
+      setEmployees((previous) => [
+        saved,
+        ...previous.filter((emp) => emp.id !== saved.id),
+      ]);
       setModalVisible(false);
       setPassword('');
       setPickedResume(null);
@@ -285,29 +312,25 @@ export const EmployeesScreen = () => {
     }
   };
   const handleDelete = (id: number, name: string) => {
-    Alert.alert(
-      'Delete Confirmation',
-      `Are you sure you want to remove ${name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.delete(`/employees/${id}`);
-              Alert.alert('Success', 'Employee deleted.');
-              if (profileEmployee?.id === id) {
-                setProfileEmployee(null);
-              }
-              await fetchEmployees();
-            } catch {
-              Alert.alert('Error', 'Unable to delete employee.');
+    Alert.alert('Delete Confirmation', `Are you sure you want to remove ${name}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.delete(`/employees/${id}`);
+            Alert.alert('Success', 'Employee deleted.');
+            if (profileEmployee?.id === id) {
+              setProfileEmployee(null);
             }
-          },
+            await fetchEmployees();
+          } catch {
+            Alert.alert('Error', 'Unable to delete employee.');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
   const openResume = async (url?: string | null) => {
     if (!url?.trim()) {
@@ -333,25 +356,68 @@ export const EmployeesScreen = () => {
   }
   return (
     <View style={styles.container}>
-      <ScreenHeading eyebrow="WORKSPACE / PEOPLE" title="Your team" subtitle={employees.length + ' people. One shared purpose.'}
-        action={<TouchableOpacity accessibilityRole="button" accessibilityLabel="Add employee" style={styles.addBtn} onPress={openAddModal}><AppIcon name="plus" color={Colors.card} size={17} /><Text style={styles.addBtnText}>Add</Text></TouchableOpacity>} />
-      <SearchField value={search} onChangeText={handleSearch} placeholder="Search people, email or department…" />
-      <View style={styles.statusFilters}>{['All', 'Active', 'Inactive'].map(option => <TouchableOpacity key={option} accessibilityRole="button" accessibilityState={{ selected: employeeStatus === option }}
-        style={[styles.statusFilter, employeeStatus === option && styles.statusFilterSelected]} onPress={() => setEmployeeStatus(option)}><Text style={[styles.statusFilterText, employeeStatus === option && { color: Colors.card }]}>{option} · {option === 'All' ? employees.length : employees.filter(employee => employee.status.toLowerCase() === option.toLowerCase()).length}</Text></TouchableOpacity>)}</View>
+      <ScreenHeading
+        eyebrow="WORKSPACE / PEOPLE"
+        title="Your team"
+        subtitle={employees.length + ' people. One shared purpose.'}
+        action={
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Add employee"
+            style={styles.addBtn}
+            onPress={openAddModal}
+          >
+            <AppIcon name="plus" color={Colors.card} size={17} />
+            <Text style={styles.addBtnText}>Add</Text>
+          </TouchableOpacity>
+        }
+      />
+      <SearchField
+        value={search}
+        onChangeText={handleSearch}
+        placeholder="Search people, email or department…"
+      />
+      <View style={styles.statusFilters}>
+        {['All', 'Active', 'Inactive'].map((option) => (
+          <TouchableOpacity
+            key={option}
+            accessibilityRole="button"
+            accessibilityState={{ selected: employeeStatus === option }}
+            style={[
+              styles.statusFilter,
+              employeeStatus === option && styles.statusFilterSelected,
+            ]}
+            onPress={() => setEmployeeStatus(option)}
+          >
+            <Text
+              style={[
+                styles.statusFilterText,
+                employeeStatus === option && { color: Colors.card },
+              ]}
+            >
+              {option} ·{' '}
+              {option === 'All'
+                ? employees.length
+                : employees.filter(
+                    (employee) => employee.status.toLowerCase() === option.toLowerCase(),
+                  ).length}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
       {/* Employee List */}
       <FlatList
         contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         data={filteredEmployees}
         keyExtractor={(item) => item.id.toString()}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
-          <EmptyState icon="users" title="No people found" message="Try another search or add a new employee to your team." />
+          <EmptyState
+            icon="users"
+            title="No people found"
+            message="Try another search or add a new employee to your team."
+          />
         }
         renderItem={({ item }) => (
           <View style={styles.card}>
@@ -374,9 +440,7 @@ export const EmployeesScreen = () => {
                 <Text style={styles.designation}>
                   {item.designation} • {item.department}
                 </Text>
-                <Text style={styles.viewHint}>
-                  Tap to view profile
-                </Text>
+                <Text style={styles.viewHint}>Tap to view profile</Text>
               </View>
               <View
                 style={[
@@ -405,19 +469,18 @@ export const EmployeesScreen = () => {
               </View>
             </TouchableOpacity>
             <View style={styles.contactRow}>
-              <View style={{ flexDirection: 'row', gap: 7, alignItems: 'center' }}><AppIcon name="mail" size={14} color={Colors.textMuted} /><Text style={[styles.contactText, { flex: 1 }]}>{item.email}</Text></View>
-              {item.phone ? (
-                <Text style={styles.contactText}>{item.phone}</Text>
-              ) : null}
+              <View style={{ flexDirection: 'row', gap: 7, alignItems: 'center' }}>
+                <AppIcon name="mail" size={14} color={Colors.textMuted} />
+                <Text style={[styles.contactText, { flex: 1 }]}>{item.email}</Text>
+              </View>
+              {item.phone ? <Text style={styles.contactText}>{item.phone}</Text> : null}
             </View>
             <View style={styles.actionRow}>
               <TouchableOpacity
                 style={styles.profileBtn}
                 onPress={() => setProfileEmployee(item)}
               >
-                <Text style={styles.profileBtnText}>
-                  Profile
-                </Text>
+                <Text style={styles.profileBtnText}>Profile</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.editBtn}
@@ -428,10 +491,7 @@ export const EmployeesScreen = () => {
               <TouchableOpacity
                 style={styles.deleteBtn}
                 onPress={() =>
-                  handleDelete(
-                    item.id,
-                    `${item.firstName} ${item.lastName}`
-                  )
+                  handleDelete(item.id, `${item.firstName} ${item.lastName}`)
                 }
               >
                 <Text style={styles.deleteBtnText}>Delete</Text>
@@ -445,24 +505,24 @@ export const EmployeesScreen = () => {
         visible={modalVisible}
         animationType="slide"
         transparent
-        onRequestClose={() => { if (!formSubmitting) setModalVisible(false); }}
+        onRequestClose={() => {
+          if (!formSubmitting) setModalVisible(false);
+        }}
       >
-        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <View style={styles.modalContent}>
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator
-            >
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator>
               <Text style={styles.modalTitle}>
-                {editingEmployee
-                  ? 'Edit Employee'
-                  : 'Add New Employee'}
+                {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
               </Text>
               {/* Resume fields */}
-              <Text style={styles.sectionTitle}>
-                Resume (Optional)
+              <Text style={styles.sectionTitle}>Resume (Optional)</Text>
+              <Text style={styles.resumeDescription}>
+                Choose a PDF or DOCX (maximum 5 MB), or enter a resume link below.
               </Text>
-              <Text style={styles.resumeDescription}>Choose a PDF or DOCX (maximum 5 MB), or enter a resume link below.</Text>
               <Text style={styles.label}>Resume URL</Text>
               <TextInput
                 style={styles.input}
@@ -500,20 +560,26 @@ export const EmployeesScreen = () => {
                   style={styles.previewBtn}
                   onPress={() => openResume(resumeUrl.trim())}
                 >
-                  <Text style={styles.previewBtnText}>
-                    Preview Resume
-                  </Text>
+                  <Text style={styles.previewBtnText}>Preview Resume</Text>
                 </TouchableOpacity>
               ) : null}
               <Text style={styles.label}>First Name *</Text>
               <TextInput
                 style={styles.input}
                 value={firstName}
-                onChangeText={value => {
+                onChangeText={(value) => {
                   setFirstName(value);
-                  const previousEmail = firstName.trim().toLowerCase().replace(/[^a-z0-9]/g, '') + '@gmail.com';
-                  const loginName = value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-                  if (!editingEmployee && (!email || email === previousEmail)) setEmail(loginName ? loginName + '@gmail.com' : '');
+                  const previousEmail =
+                    firstName
+                      .trim()
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]/g, '') + '@gmail.com';
+                  const loginName = value
+                    .trim()
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]/g, '');
+                  if (!editingEmployee && (!email || email === previousEmail))
+                    setEmail(loginName ? loginName + '@gmail.com' : '');
                 }}
                 placeholder="First name"
               />
@@ -533,11 +599,26 @@ export const EmployeesScreen = () => {
                 autoCapitalize="none"
                 placeholder="employee@example.com"
               />
-              <Text style={styles.label}>{editingEmployee ? 'New login password (optional)' : 'Login password *'}</Text>
-              <TextInput style={styles.input} value={password} onChangeText={setPassword}
-                secureTextEntry autoCapitalize="none" autoCorrect={false}
-                placeholder={editingEmployee ? 'Leave blank to keep current password' : 'At least 6 characters'} />
-              <Text style={styles.resumeDescription}>This email and password are used for Employee login. Passwords are never displayed after saving.</Text>
+              <Text style={styles.label}>
+                {editingEmployee ? 'New login password (optional)' : 'Login password *'}
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholder={
+                  editingEmployee
+                    ? 'Leave blank to keep current password'
+                    : 'At least 6 characters'
+                }
+              />
+              <Text style={styles.resumeDescription}>
+                This email and password are used for Employee login. Passwords are never
+                displayed after saving.
+              </Text>
               <Text style={styles.label}>Phone</Text>
               <TextInput
                 style={styles.input}
@@ -567,16 +648,14 @@ export const EmployeesScreen = () => {
                     key={s}
                     style={[
                       styles.statusToggleBtn,
-                      status === s &&
-                        styles.statusToggleBtnActive,
+                      status === s && styles.statusToggleBtnActive,
                     ]}
                     onPress={() => setStatus(s)}
                   >
                     <Text
                       style={[
                         styles.statusToggleText,
-                        status === s &&
-                          styles.statusToggleTextActive,
+                        status === s && styles.statusToggleTextActive,
                       ]}
                     >
                       {s}
@@ -590,9 +669,7 @@ export const EmployeesScreen = () => {
                   onPress={() => setModalVisible(false)}
                   disabled={formSubmitting}
                 >
-                  <Text style={styles.cancelBtnText}>
-                    Cancel
-                  </Text>
+                  <Text style={styles.cancelBtnText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.saveBtn}
@@ -600,14 +677,9 @@ export const EmployeesScreen = () => {
                   disabled={formSubmitting}
                 >
                   {formSubmitting ? (
-                    <ActivityIndicator
-                      size="small"
-                      color="#fff"
-                    />
+                    <ActivityIndicator size="small" color="#fff" />
                   ) : (
-                    <Text style={styles.saveBtnText}>
-                      Save Employee
-                    </Text>
+                    <Text style={styles.saveBtnText}>Save Employee</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -633,8 +705,7 @@ export const EmployeesScreen = () => {
                   </Text>
                 </View>
                 <Text style={styles.profileName}>
-                  {profileEmployee?.firstName}{' '}
-                  {profileEmployee?.lastName}
+                  {profileEmployee?.firstName} {profileEmployee?.lastName}
                 </Text>
                 <Text style={styles.profileDesignation}>
                   {profileEmployee?.designation}
@@ -643,9 +714,7 @@ export const EmployeesScreen = () => {
                   {profileEmployee?.department}
                 </Text>
               </View>
-              <Text style={styles.sectionTitle}>
-                Employee Information
-              </Text>
+              <Text style={styles.sectionTitle}>Employee Information</Text>
               <View style={styles.infoBox}>
                 <Text style={styles.infoLabel}>Email</Text>
                 <Text style={styles.infoValue}>
@@ -675,23 +744,18 @@ export const EmployeesScreen = () => {
                 <Text style={styles.infoLabel}>Joining Date</Text>
                 <Text style={styles.infoValue}>
                   {profileEmployee?.joiningDate
-                    ? new Date(
-                        profileEmployee.joiningDate
-                      ).toLocaleDateString()
+                    ? new Date(profileEmployee.joiningDate).toLocaleDateString()
                     : 'Not provided'}
                 </Text>
               </View>
               {/* Resume section */}
-              <Text style={styles.sectionTitle}>
-                Employee Resume
-              </Text>
+              <Text style={styles.sectionTitle}>Employee Resume</Text>
               <View style={styles.resumeCard}>
                 <Text style={styles.resumeIcon}>📄</Text>
                 {profileEmployee?.resumeUrl ? (
                   <>
                     <Text style={styles.resumeFileName}>
-                      {profileEmployee.resumeFileName ||
-                        'Employee Resume'}
+                      {profileEmployee.resumeFileName || 'Employee Resume'}
                     </Text>
                     <Text style={styles.resumeDescription}>
                       Resume is available for viewing.
@@ -699,13 +763,9 @@ export const EmployeesScreen = () => {
                     <TouchableOpacity
                       style={styles.resumeOpenBtn}
                       disabled={removingResume}
-                      onPress={() =>
-                        openResume(profileEmployee.resumeUrl)
-                      }
+                      onPress={() => openResume(profileEmployee.resumeUrl)}
                     >
-                      <Text style={styles.resumeOpenBtnText}>
-                        View / Download Resume
-                      </Text>
+                      <Text style={styles.resumeOpenBtnText}>View / Download Resume</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.resumeEditBtn}
@@ -717,9 +777,7 @@ export const EmployeesScreen = () => {
                         }
                       }}
                     >
-                      <Text style={styles.resumeEditBtnText}>
-                        Replace Resume
-                      </Text>
+                      <Text style={styles.resumeEditBtnText}>Replace Resume</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.resumeEditBtn}
@@ -733,12 +791,10 @@ export const EmployeesScreen = () => {
                   </>
                 ) : (
                   <>
-                    <Text style={styles.resumeFileName}>
-                      No Resume Added
-                    </Text>
+                    <Text style={styles.resumeFileName}>No Resume Added</Text>
                     <Text style={styles.resumeDescription}>
-                      Choose a resume file or add a link in Edit Employee to show
-                      the resume here.
+                      Choose a resume file or add a link in Edit Employee to show the
+                      resume here.
                     </Text>
                     <TouchableOpacity
                       style={styles.resumeOpenBtn}
@@ -749,9 +805,7 @@ export const EmployeesScreen = () => {
                         }
                       }}
                     >
-                      <Text style={styles.resumeOpenBtnText}>
-                        Add Resume
-                      </Text>
+                      <Text style={styles.resumeOpenBtnText}>Add Resume</Text>
                     </TouchableOpacity>
                   </>
                 )}
@@ -767,17 +821,13 @@ export const EmployeesScreen = () => {
                     }
                   }}
                 >
-                  <Text style={styles.editProfileBtnText}>
-                    Edit Employee
-                  </Text>
+                  <Text style={styles.editProfileBtnText}>Edit Employee</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.closeProfileBtn}
                   onPress={() => setProfileEmployee(null)}
                 >
-                  <Text style={styles.closeProfileBtnText}>
-                    Close Profile
-                  </Text>
+                  <Text style={styles.closeProfileBtnText}>Close Profile</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -788,12 +838,25 @@ export const EmployeesScreen = () => {
   );
 };
 const styles = StyleSheet.create({
-  statusFilters: { flexDirection: 'row', gap: 8, paddingVertical: 16 }, statusFilter: { minHeight: 40, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 12, backgroundColor: Colors.card, borderWidth: 1, borderColor: Colors.border }, statusFilterSelected: { backgroundColor: Colors.ink, borderColor: Colors.ink }, statusFilterText: { color: Colors.textMuted, fontSize: 11, fontWeight: '600' },
+  statusFilters: { flexDirection: 'row', gap: 8, paddingVertical: 16 },
+  statusFilter: {
+    minHeight: 40,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  statusFilterSelected: { backgroundColor: Colors.ink, borderColor: Colors.ink },
+  statusFilterText: { color: Colors.textMuted, fontSize: 11, fontWeight: '600' },
   container: {
     flex: 1,
     backgroundColor: Colors.background,
     padding: 20,
-    width: '100%', maxWidth: 1000, alignSelf: 'center',
+    width: '100%',
+    maxWidth: 1000,
+    alignSelf: 'center',
   },
   center: {
     flex: 1,
@@ -804,7 +867,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 12,
   },
-  searchInput: { ...Layout.input,
+  searchInput: {
+    ...Layout.input,
     flex: 1,
     backgroundColor: Colors.card,
     borderRadius: 12,
@@ -814,7 +878,11 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     color: Colors.textDark,
   },
-  addBtn: { minHeight: 46, justifyContent: 'center', flexDirection: 'row', gap: 5,
+  addBtn: {
+    minHeight: 46,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 5,
     backgroundColor: Colors.primary,
     marginLeft: 8,
     paddingHorizontal: 16,
@@ -825,7 +893,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
   },
-  card: { ...Layout.card,
+  card: {
+    ...Layout.card,
     backgroundColor: Colors.card,
     borderRadius: 20,
     padding: 20,
@@ -891,12 +960,16 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginTop: 2,
   },
-  actionRow: { flexWrap: 'wrap', rowGap: 8,
+  actionRow: {
+    flexWrap: 'wrap',
+    rowGap: 8,
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: 10,
   },
-  profileBtn: { minHeight: 44, justifyContent: 'center',
+  profileBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
     backgroundColor: Colors.accentSoft,
     paddingHorizontal: 12,
     paddingVertical: 7,
@@ -908,7 +981,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 12,
   },
-  editBtn: { minHeight: 44, justifyContent: 'center',
+  editBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
     backgroundColor: Colors.primarySoft,
     paddingHorizontal: 14,
     paddingVertical: 7,
@@ -920,7 +995,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 12,
   },
-  deleteBtn: { minHeight: 44, justifyContent: 'center',
+  deleteBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
     backgroundColor: Colors.errorSoft,
     paddingHorizontal: 14,
     paddingVertical: 7,
@@ -945,13 +1022,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
-  modalContent: { ...Layout.card, width: '100%', maxWidth: 560, alignSelf: 'center',
+  modalContent: {
+    ...Layout.card,
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
     backgroundColor: Colors.card,
     borderRadius: 18,
     padding: 20,
     maxHeight: '90%',
   },
-  profileModalContent: { ...Layout.card, width: '100%', maxWidth: 560, alignSelf: 'center',
+  profileModalContent: {
+    ...Layout.card,
+    width: '100%',
+    maxWidth: 560,
+    alignSelf: 'center',
     backgroundColor: Colors.card,
     borderRadius: 18,
     padding: 20,
@@ -970,7 +1055,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 4,
   },
-  input: { ...Layout.input,
+  input: {
+    ...Layout.input,
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: 12,
@@ -991,7 +1077,9 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 16,
   },
-  statusToggleBtn: { minHeight: 44, justifyContent: 'center',
+  statusToggleBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
     flex: 1,
     paddingVertical: 8,
     alignItems: 'center',
@@ -1023,13 +1111,17 @@ const styles = StyleSheet.create({
     color: Colors.accent,
     fontWeight: '600',
   },
-  modalActions: { flexWrap: 'wrap', rowGap: 8,
+  modalActions: {
+    flexWrap: 'wrap',
+    rowGap: 8,
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: 16,
     marginBottom: 8,
   },
-  cancelBtn: { minHeight: 44, justifyContent: 'center',
+  cancelBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
     paddingVertical: 10,
     paddingHorizontal: 16,
     marginRight: 8,
@@ -1038,7 +1130,9 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontWeight: '600',
   },
-  saveBtn: { minHeight: 44, justifyContent: 'center',
+  saveBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
     backgroundColor: Colors.primary,
     paddingVertical: 10,
     paddingHorizontal: 18,
@@ -1104,7 +1198,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.border,
     marginVertical: 10,
   },
-  resumeCard: { ...Layout.card,
+  resumeCard: {
+    ...Layout.card,
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,

@@ -1,18 +1,19 @@
+// Common API client: token attach, expired token refresh and account-change checks.
 
-import { create, isAxiosError,
-  InternalAxiosRequestConfig,
-  AxiosError,
-} from 'axios';
+import { create, isAxiosError, InternalAxiosRequestConfig, AxiosError } from 'axios';
 
 import { secureStorage } from '../storage/secureStorage';
 
-const BASE_URL =
-  (process.env.EXPO_PUBLIC_API_URL ?? 'https://employeeapi-3lob.onrender.com/api').replace(/\/+$/, '');
+const BASE_URL = (
+  process.env.EXPO_PUBLIC_API_URL ?? 'https://employeeapi-3lob.onrender.com/api'
+).replace(/\/+$/, '');
 
 const sessionExpiredListeners = new Set<() => void>();
 export function onSessionExpired(listener: () => void) {
   sessionExpiredListeners.add(listener);
-  return () => { sessionExpiredListeners.delete(listener); };
+  return () => {
+    sessionExpiredListeners.delete(listener);
+  };
 }
 
 let sessionEpoch = 0;
@@ -26,7 +27,8 @@ async function expireSession(expectedEpoch = sessionEpoch) {
   const expiredEpoch = ++sessionEpoch;
   refreshPromise = null;
   await secureStorage.clearTokens();
-  if (sessionEpoch === expiredEpoch) sessionExpiredListeners.forEach(listener => listener());
+  if (sessionEpoch === expiredEpoch)
+    sessionExpiredListeners.forEach((listener) => listener());
 }
 
 type RetryConfig = InternalAxiosRequestConfig & {
@@ -54,37 +56,36 @@ const refreshApi = create({
 
 let refreshPromise: Promise<string | null> | null = null;
 
-api.interceptors.request.use(
-  async (config: InternalAxiosRequestConfig) => {
-    const request = config as RetryConfig;
-    request._sessionEpoch ??= sessionEpoch;
-    if (request._sessionEpoch !== sessionEpoch) throw new Error('The signed-in account changed.');
-    const token = await secureStorage.getAccessToken();
-    if (request._sessionEpoch !== sessionEpoch) throw new Error('The signed-in account changed.');
+api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  const request = config as RetryConfig;
+  request._sessionEpoch ??= sessionEpoch;
+  if (request._sessionEpoch !== sessionEpoch)
+    throw new Error('The signed-in account changed.');
+  const token = await secureStorage.getAccessToken();
+  if (request._sessionEpoch !== sessionEpoch)
+    throw new Error('The signed-in account changed.');
 
-    if (token && config.url !== '/auth/login' && config.url !== '/auth/refresh') {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    return config;
+  if (token && config.url !== '/auth/login' && config.url !== '/auth/refresh') {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+
+  return config;
+});
 
 api.interceptors.response.use(
-  response => {
+  (response) => {
     if ((response.config as RetryConfig)._sessionEpoch !== sessionEpoch)
       throw new Error('The signed-in account changed.');
     return response;
   },
 
   async (error: AxiosError) => {
-    const originalRequest = error.config as
-      | RetryConfig
-      | undefined;
+    const originalRequest = error.config as RetryConfig | undefined;
 
     const requestUrl = originalRequest?.url ?? '';
     const epoch = originalRequest?._sessionEpoch ?? sessionEpoch;
-    if (epoch !== sessionEpoch) return Promise.reject(new Error('The signed-in account changed.'));
+    if (epoch !== sessionEpoch)
+      return Promise.reject(new Error('The signed-in account changed.'));
 
     // Login/refresh failures ki automatic refresh cheyyakudadhu.
     if (
@@ -106,47 +107,57 @@ api.interceptors.response.use(
     try {
       if (!refreshPromise) {
         refreshPromise = (async () => {
-          const refreshToken =
-            await secureStorage.getRefreshToken();
+          const refreshToken = await secureStorage.getRefreshToken();
 
           if (!refreshToken) {
             await expireSession(epoch);
             return null;
           }
 
-          const response = await refreshApi.post(
-            '/auth/refresh',
-            { refreshToken }
-          );
+          const response = await refreshApi.post('/auth/refresh', { refreshToken });
 
-          const newAccessToken =
-            response.data.accessToken;
+          const newAccessToken = response.data.accessToken;
 
-          const newRefreshToken =
-            response.data.refreshToken;
+          const newRefreshToken = response.data.refreshToken;
 
-          if (epoch !== sessionEpoch || await secureStorage.getRefreshToken() !== refreshToken)
+          if (
+            epoch !== sessionEpoch ||
+            (await secureStorage.getRefreshToken()) !== refreshToken
+          )
             throw new Error('The signed-in account changed during token refresh.');
 
-          if (typeof newAccessToken !== 'string' || !newAccessToken ||
-              typeof newRefreshToken !== 'string' || !newRefreshToken) {
-            throw new Error('The server returned an invalid refresh response. Please try again.');
+          if (
+            typeof newAccessToken !== 'string' ||
+            !newAccessToken ||
+            typeof newRefreshToken !== 'string' ||
+            !newRefreshToken
+          ) {
+            throw new Error(
+              'The server returned an invalid refresh response. Please try again.',
+            );
           }
 
           await secureStorage.saveTokens(
             newAccessToken,
             newRefreshToken,
-            () => epoch === sessionEpoch
+            () => epoch === sessionEpoch,
           );
 
           return newAccessToken as string;
-        })().catch(async refreshError => {
-          if (isAxiosError(refreshError) &&
-              (refreshError.response?.status === 401 || refreshError.response?.status === 403)) {
-            await expireSession(epoch);
-          }
-          throw refreshError;
-        }).finally(() => { if (epoch === sessionEpoch) refreshPromise = null; });
+        })()
+          .catch(async (refreshError) => {
+            if (
+              isAxiosError(refreshError) &&
+              (refreshError.response?.status === 401 ||
+                refreshError.response?.status === 403)
+            ) {
+              await expireSession(epoch);
+            }
+            throw refreshError;
+          })
+          .finally(() => {
+            if (epoch === sessionEpoch) refreshPromise = null;
+          });
       }
 
       const newToken = await refreshPromise;
@@ -155,12 +166,11 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      originalRequest.headers.Authorization =
-        `Bearer ${newToken}`;
+      originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
       return api(originalRequest);
     } catch (refreshError) {
       return Promise.reject(refreshError);
     }
-  }
+  },
 );

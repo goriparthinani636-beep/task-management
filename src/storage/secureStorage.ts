@@ -14,7 +14,11 @@ async function deleteBoth() {
 }
 
 export const secureStorage = {
-  saveTokens(accessToken: string, refreshToken: string, isCurrent: () => boolean = () => true): Promise<void> {
+  saveTokens(
+    accessToken: string,
+    refreshToken: string,
+    isCurrent: () => boolean = () => true,
+  ): Promise<void> {
     return mutate(async () => {
       if (!isCurrent()) return;
       await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
@@ -30,5 +34,7 @@ export const secureStorage = {
     await writes.catch(() => {});
     return SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
   },
-  clearTokens(): Promise<void> { return mutate(deleteBoth); },
+  clearTokens(): Promise<void> {
+    return mutate(deleteBoth);
+  },
 };

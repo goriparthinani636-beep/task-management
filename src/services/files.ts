@@ -1,3 +1,4 @@
+// Document API requests and upload data preparation.
 import { Linking } from 'react-native';
 import { api } from './api';
 
@@ -34,12 +35,18 @@ export function fileUrl(value: unknown): string {
 
 export function uploadedFiles(data: unknown, expectedCount?: number): UploadedFile[] {
   const body = data as { files?: unknown; success?: boolean; message?: string } | null;
-  if (body?.success === false) throw new Error(body.message || 'The server rejected the upload.');
+  if (body?.success === false)
+    throw new Error(body.message || 'The server rejected the upload.');
   const records = Array.isArray(data) ? data : body?.files;
-  if (!Array.isArray(records) || (expectedCount !== undefined && records.length !== expectedCount)) {
-    throw new Error('The server did not confirm all uploaded files. Refresh the list before retrying.');
+  if (
+    !Array.isArray(records) ||
+    (expectedCount !== undefined && records.length !== expectedCount)
+  ) {
+    throw new Error(
+      'The server did not confirm all uploaded files. Refresh the list before retrying.',
+    );
   }
-  return records.map(record => {
+  return records.map((record) => {
     if (!record || typeof record.id !== 'number' || typeof record.fileName !== 'string') {
       throw new Error('The server returned an invalid file record.');
     }
@@ -67,10 +74,14 @@ export async function openFile(value: unknown) {
     try {
       const response = await fetch(url, { method: 'HEAD', signal: controller.signal });
       if (response.status === 401 || response.status === 403) {
-        throw new Error('The file host denied access. The server administrator needs to check this file’s delivery permissions.');
+        throw new Error(
+          'The file host denied access. The server administrator needs to check this file’s delivery permissions.',
+        );
       }
       if (response.status === 404) {
-        throw new Error('This saved file link no longer exists. Please upload the document again.');
+        throw new Error(
+          'This saved file link no longer exists. Please upload the document again.',
+        );
       }
       if (!response.ok && response.status !== 405) {
         throw new Error('The file host is unavailable. Please try again later.');

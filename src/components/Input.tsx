@@ -14,12 +14,23 @@ export const Input: React.FC<Props> = ({ label, error, style, ...props }) => {
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={[styles.input, focused ? styles.inputFocused : null, error ? styles.inputError : null, style]}
+        style={[
+          styles.input,
+          focused ? styles.inputFocused : null,
+          error ? styles.inputError : null,
+          style,
+        ]}
         accessibilityLabel={label}
         placeholderTextColor={Colors.textMuted}
         {...props}
-        onFocus={event => { setFocused(true); props.onFocus?.(event); }}
-        onBlur={event => { setFocused(false); props.onBlur?.(event); }}
+        onFocus={(event) => {
+          setFocused(true);
+          props.onFocus?.(event);
+        }}
+        onBlur={(event) => {
+          setFocused(false);
+          props.onBlur?.(event);
+        }}
       />
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>

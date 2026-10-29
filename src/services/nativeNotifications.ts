@@ -1,3 +1,4 @@
+// Supported app build lo matrame native notifications module load chesthundi.
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 

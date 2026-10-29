@@ -1,6 +1,12 @@
+// Login, session restore and logout steps ikkada run avuthayi.
 import type { ThunkAction, UnknownAction } from '@reduxjs/toolkit';
 import type { SessionUser } from '../services/employeeScope';
-import { loginSuccess, sessionFinished, sessionStarted, type AuthRootState } from './authSlice';
+import {
+  loginSuccess,
+  sessionFinished,
+  sessionStarted,
+  type AuthRootState,
+} from './authSlice';
 
 export interface AuthDependencies {
   api: {
@@ -17,15 +23,27 @@ export interface AuthDependencies {
   resetApiSession(): void;
   stopNotifications(): void;
 }
-type AuthThunk<Result = Promise<void>> = ThunkAction<Result, AuthRootState, AuthDependencies, UnknownAction>;
+type AuthThunk<Result = Promise<void>> = ThunkAction<
+  Result,
+  AuthRootState,
+  AuthDependencies,
+  UnknownAction
+>;
 
 function publicUser(user: SessionUser): SessionUser {
   // Only the display/authorization identity belongs in shared UI state.
-  return { id: user.id, name: user.name, email: user.email, role: user.role, employeeId: user.employeeId };
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    employeeId: user.employeeId,
+  };
 }
 
 // Manual thunks keep credentials out of serializable Redux actions and DevTools.
-export const login = (email: string, password: string, role: SessionUser['role']): AuthThunk =>
+export const login =
+  (email: string, password: string, role: SessionUser['role']): AuthThunk =>
   async (dispatch, getState, services) => {
     if (getState().auth.isSigningIn || getState().auth.isLoggingOut) return;
     services.resetApiSession();
@@ -36,16 +54,27 @@ export const login = (email: string, password: string, role: SessionUser['role']
     try {
       await services.storage.clearTokens();
       if (!current()) return;
-      const { data } = await services.api.post('/auth/login', { email: email.trim(), password, role });
+      const { data } = await services.api.post('/auth/login', {
+        email: email.trim(),
+        password,
+        role,
+      });
       if (!current()) return;
-      if (typeof data.accessToken !== 'string' || !data.accessToken ||
-          typeof data.refreshToken !== 'string' || !data.refreshToken)
+      if (
+        typeof data.accessToken !== 'string' ||
+        !data.accessToken ||
+        typeof data.refreshToken !== 'string' ||
+        !data.refreshToken
+      )
         throw new Error('The server login response is missing session tokens.');
       const user = publicUser(services.validateUser(data.user, email, role));
       await services.storage.saveTokens(data.accessToken, data.refreshToken, current);
       if (current()) dispatch(loginSuccess({ user, version }));
     } catch (error) {
-      if (current()) { dispatch(sessionFinished(version)); throw error; }
+      if (current()) {
+        dispatch(sessionFinished(version));
+        throw error;
+      }
     }
   };
 
@@ -68,7 +97,10 @@ export const restoreSession = (): AuthThunk => async (dispatch, getState, servic
     const user = publicUser(services.validateUser(data.user ?? data));
     const latestAccess = await services.storage.getAccessToken();
     if (!current()) return;
-    if (!latestAccess) { dispatch(sessionFinished(version)); return; }
+    if (!latestAccess) {
+      dispatch(sessionFinished(version));
+      return;
+    }
     dispatch(loginSuccess({ user, version }));
   } catch {
     // api.ts handles revoked sessions; temporary network errors preserve storage.
@@ -81,12 +113,17 @@ export const logout = (): AuthThunk => async (dispatch, getState, services) => {
   services.stopNotifications();
   dispatch(sessionStarted('logout'));
   const version = getState().auth.sessionVersion;
-  try { await services.api.post('/auth/logout'); }
-  catch { /* Local logout must complete even while the server is unavailable. */ }
-  finally {
+  try {
+    await services.api.post('/auth/logout');
+  } catch {
+    /* Local logout must complete even while the server is unavailable. */
+  } finally {
     if (getState().auth.sessionVersion === version) {
-      try { await services.storage.clearTokens(); }
-      finally { dispatch(sessionFinished(version)); }
+      try {
+        await services.storage.clearTokens();
+      } finally {
+        dispatch(sessionFinished(version));
+      }
     }
   }
 };

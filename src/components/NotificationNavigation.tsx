@@ -20,16 +20,25 @@ export function NotificationNavigation() {
       if (handled.current.has(id)) return;
       const taskId = notificationTaskId(response.notification.request.content.data, user);
       handled.current.add(id);
-      if (handled.current.size > 100) handled.current.delete(handled.current.values().next().value!);
-      if (taskId !== null) router.push({ pathname: '/(tabs)/tasks', params: { taskId: String(taskId) } });
+      if (handled.current.size > 100)
+        handled.current.delete(handled.current.values().next().value!);
+      if (taskId !== null)
+        router.push({ pathname: '/(tabs)/tasks', params: { taskId: String(taskId) } });
       void nativeNotifications.clearLastNotificationResponseAsync().catch(() => {});
     };
     let mounted = true;
-    const subscription = nativeNotifications.addNotificationResponseReceivedListener(handle);
-    void nativeNotifications.getLastNotificationResponseAsync().then(response => {
-      if (mounted && response) handle(response);
-    }).catch(() => {});
-    return () => { mounted = false; subscription.remove(); };
+    const subscription =
+      nativeNotifications.addNotificationResponseReceivedListener(handle);
+    void nativeNotifications
+      .getLastNotificationResponseAsync()
+      .then((response) => {
+        if (mounted && response) handle(response);
+      })
+      .catch(() => {});
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
   }, [navigation?.key, router, user]);
   return null;
 }
