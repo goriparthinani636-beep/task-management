@@ -46,3 +46,4 @@ yarn-error.*
 # Firebase service-account private keys must never enter the APK or Git.
 *firebase-adminsdk*.json
 *service-account*.json
+/dist-leave-check/

@@ -2,7 +2,7 @@
 import { getNativeNotifications } from './nativeNotifications';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
-import { notificationTaskId } from './notificationTarget';
+import { notificationTaskId, notificationLeaveId } from './notificationTarget';
 
 let foregroundAccount: { id: number; employeeId: number | null } | null = null;
 export function setNotificationAccount(
@@ -14,11 +14,14 @@ export function setNotificationAccount(
 getNativeNotifications()?.setNotificationHandler({
   handleNotification: async (notification) => ({
     shouldShowBanner:
-      notificationTaskId(notification.request.content.data, foregroundAccount) !== null,
+      notificationTaskId(notification.request.content.data, foregroundAccount) !== null ||
+      notificationLeaveId(notification.request.content.data, foregroundAccount) !== null,
     shouldShowList:
-      notificationTaskId(notification.request.content.data, foregroundAccount) !== null,
+      notificationTaskId(notification.request.content.data, foregroundAccount) !== null ||
+      notificationLeaveId(notification.request.content.data, foregroundAccount) !== null,
     shouldPlaySound:
-      notificationTaskId(notification.request.content.data, foregroundAccount) !== null,
+      notificationTaskId(notification.request.content.data, foregroundAccount) !== null ||
+      notificationLeaveId(notification.request.content.data, foregroundAccount) !== null,
     shouldSetBadge: false,
   }),
 });

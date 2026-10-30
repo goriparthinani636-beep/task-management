@@ -49,7 +49,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test:redux": "node --test scripts/test-redux-auth.cjs",
-    "test:workspace": "node --test scripts/test-workspace-ui.cjs"
+    "test:workspace": "node --test scripts/test-workspace-ui.cjs",
+    "test:leaves": "node --test scripts/test-leaves.cjs"
   },
   "private": true
 }

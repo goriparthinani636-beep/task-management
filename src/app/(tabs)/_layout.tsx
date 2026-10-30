@@ -14,6 +14,7 @@ const icons = {
   details: 'Employees',
   tasks: 'Tasks',
   attendance: 'Attendance',
+  leaves: 'Tasks',
   files: 'FileUpload',
   profile: 'Profile',
 } as const;
@@ -99,6 +100,7 @@ export default function MainTabs() {
         <Tabs.Screen name="details" options={{ title: 'My details' }} />
       </Tabs.Protected>
       <Tabs.Screen name="tasks" options={{ title: manager ? 'Tasks' : 'My tasks' }} />
+      <Tabs.Screen name="leaves" options={{ title: 'Leave' }} />
       <Tabs.Screen name="attendance" options={{ title: 'Attendance' }} />
       <Tabs.Screen name="files" options={{ title: manager ? 'Files' : 'My files' }} />
       <Tabs.Screen name="profile" options={{ title: 'Account' }} />

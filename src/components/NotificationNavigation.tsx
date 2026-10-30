@@ -4,7 +4,7 @@ import type * as Notifications from 'expo-notifications';
 import { getNativeNotifications } from '../services/nativeNotifications';
 import { useAppSelector } from '../store/hooks';
 import { selectCurrentUser } from '../store/authSlice';
-import { notificationTaskId } from '../services/notificationTarget';
+import { notificationTaskId, notificationLeaveId } from '../services/notificationTarget';
 
 export function NotificationNavigation() {
   const user = useAppSelector(selectCurrentUser);
@@ -18,12 +18,16 @@ export function NotificationNavigation() {
     const handle = (response: Notifications.NotificationResponse) => {
       const id = response.notification.request.identifier;
       if (handled.current.has(id)) return;
-      const taskId = notificationTaskId(response.notification.request.content.data, user);
+      const data = response.notification.request.content.data;
+      const taskId = notificationTaskId(data, user);
+      const leaveId = notificationLeaveId(data, user);
       handled.current.add(id);
       if (handled.current.size > 100)
         handled.current.delete(handled.current.values().next().value!);
       if (taskId !== null)
         router.push({ pathname: '/(tabs)/tasks', params: { taskId: String(taskId) } });
+      if (leaveId !== null)
+        router.push({ pathname: '/(tabs)/leaves', params: { leaveId: String(leaveId) } });
       void nativeNotifications.clearLastNotificationResponseAsync().catch(() => {});
     };
     let mounted = true;
