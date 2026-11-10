@@ -2,7 +2,7 @@
 import { AppIcon } from '../components/AppIcon';
 import { ScreenHeading, SearchField, EmptyState } from '../components/ScreenUI';
 import { Layout } from '../theme/layout';
-import React, { useMemo, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useFocusEffect } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import {
@@ -37,12 +37,26 @@ export interface Employee {
   resumeUrl?: string | null;
   resumeFileName?: string | null;
 }
+type EmployeePage = {
+  items: Employee[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+};
 export const EmployeesScreen = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [totalEmployees, setTotalEmployees] = useState(0);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [employeeStatus, setEmployeeStatus] = useState('All');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const pageRef = useRef(1);
+  const requestVersion = useRef(0);
+  const loadingMoreRef = useRef(false);
+  const hasMoreRef = useRef(false);
   // Add/Edit modal
   const [modalVisible, setModalVisible] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
@@ -107,49 +121,69 @@ export const EmployeesScreen = () => {
   const [resumeFileName, setResumeFileName] = useState('');
   const [pickedResume, setPickedResume] =
     useState<DocumentPicker.DocumentPickerAsset | null>(null);
-  const fetchEmployees = useCallback(async () => {
-    try {
-      const response = await api.get('/employees');
-      const data: Employee[] = response.data;
-      if (!Array.isArray(data)) throw new Error('Invalid employee list.');
-      setEmployees(data);
-    } catch {
-      Alert.alert('Error', 'Unable to fetch employees from server.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+  const fetchEmployees = useCallback(async (loadMore = false) => {
+    if (loadMore && (loadingMoreRef.current || !hasMoreRef.current)) return;
+    if (loadMore) {
+      loadingMoreRef.current = true;
+      setLoadingMore(true);
+    } else {
+      requestVersion.current += 1;
+      hasMoreRef.current = false;
+      setLoading(true);
     }
-  }, []);
+    const version = requestVersion.current;
+    const page = loadMore ? pageRef.current + 1 : 1;
+    try {
+      const response = await api.get<EmployeePage>('/employees/page', {
+        params: {
+          page,
+          pageSize: 20,
+          search: debouncedSearch || undefined,
+          status: employeeStatus === 'All' ? undefined : employeeStatus,
+        },
+      });
+      if (version !== requestVersion.current) return;
+      const data = response.data;
+      if (!Array.isArray(data.items)) throw new Error('Invalid employee list.');
+      setEmployees((previous) =>
+        loadMore ? [...previous, ...data.items] : data.items,
+      );
+      pageRef.current = data.page;
+      setTotalEmployees(data.total);
+      hasMoreRef.current = data.hasMore;
+    } catch {
+      if (version === requestVersion.current)
+        Alert.alert('Error', 'Unable to fetch employees from server.');
+    } finally {
+      if (version === requestVersion.current && !loadMore) {
+        setLoading(false);
+        setRefreshing(false);
+      }
+      if (loadMore) {
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+      }
+    }
+  }, [debouncedSearch, employeeStatus]);
   useFocusEffect(
     useCallback(() => {
-      void fetchEmployees();
+      void fetchEmployees(false);
+      return () => {
+        requestVersion.current += 1;
+      };
     }, [fetchEmployees]),
   );
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchEmployees();
+    void fetchEmployees(false);
   }, [fetchEmployees]);
-  const filterEmployees = (data: Employee[], text: string): Employee[] => {
-    const query = text.trim().toLowerCase();
-    if (!query) return data;
-    return data.filter((emp) =>
-      [emp.firstName, emp.lastName, emp.email, emp.department, emp.designation].some(
-        (value) => (value || '').toLowerCase().includes(query),
-      ),
-    );
-  };
   const handleSearch = (text: string) => {
     setSearch(text);
   };
-  const filteredEmployees = useMemo(
-    () =>
-      filterEmployees(employees, search).filter(
-        (employee) =>
-          employeeStatus === 'All' ||
-          employee.status.toLowerCase() === employeeStatus.toLowerCase(),
-      ),
-    [employees, search, employeeStatus],
-  );
   const resetForm = () => {
     setFirstName('');
     setLastName('');
@@ -286,10 +320,7 @@ export const EmployeesScreen = () => {
         },
         password || undefined,
       );
-      setEmployees((previous) => [
-        saved,
-        ...previous.filter((emp) => emp.id !== saved.id),
-      ]);
+      await fetchEmployees(false);
       setModalVisible(false);
       setPassword('');
       setPickedResume(null);
@@ -359,7 +390,7 @@ export const EmployeesScreen = () => {
       <ScreenHeading
         eyebrow="WORKSPACE / PEOPLE"
         title="Your team"
-        subtitle={employees.length + ' people. One shared purpose.'}
+        subtitle={totalEmployees + ' people. One shared purpose.'}
         action={
           <TouchableOpacity
             accessibilityRole="button"
@@ -395,12 +426,7 @@ export const EmployeesScreen = () => {
                 employeeStatus === option && { color: Colors.card },
               ]}
             >
-              {option} ·{' '}
-              {option === 'All'
-                ? employees.length
-                : employees.filter(
-                    (employee) => employee.status.toLowerCase() === option.toLowerCase(),
-                  ).length}
+              {option}{option === employeeStatus ? ` · ${totalEmployees}` : ''}
             </Text>
           </TouchableOpacity>
         ))}
@@ -409,8 +435,10 @@ export const EmployeesScreen = () => {
       <FlatList
         contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
-        data={filteredEmployees}
+        data={employees}
         keyExtractor={(item) => item.id.toString()}
+        onEndReached={() => void fetchEmployees(true)}
+        onEndReachedThreshold={0.5}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <EmptyState
@@ -418,6 +446,11 @@ export const EmployeesScreen = () => {
             title="No people found"
             message="Try another search or add a new employee to your team."
           />
+        }
+        ListFooterComponent={
+          loadingMore ? (
+            <ActivityIndicator style={{ padding: 18 }} color={Colors.primary} />
+          ) : null
         }
         renderItem={({ item }) => (
           <View style={styles.card}>
