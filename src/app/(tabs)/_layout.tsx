@@ -27,6 +27,7 @@ export default function MainTabs() {
     <Tabs
       key={`${user?.id}:${user?.employeeId}:${user?.role}`}
       screenOptions={({ route }) => ({
+        tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textMuted,
         headerStyle: { backgroundColor: Colors.card },

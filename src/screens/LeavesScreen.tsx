@@ -29,6 +29,7 @@ import {
 import { indiaWorkDate } from '../services/workspaceSummary';
 import { Colors } from '../theme/colors';
 import { Layout } from '../theme/layout';
+import { useFormKeyboard } from '../hooks/useFormKeyboard';
 
 export function LeavesScreen() {
   const user = useAppSelector(selectCurrentUser);
@@ -43,6 +44,8 @@ export function LeavesScreen() {
   const [leaveType, setLeaveType] = useState<string>('Casual');
   const [reason, setReason] = useState('');
   const [comments, setComments] = useState<Record<number, string>>({});
+  const leaveInputProps = useFormKeyboard(3);
+  const commentInputProps = useFormKeyboard(1);
   const generation = useRef(0);
   const mutation = useRef(false);
 
@@ -125,6 +128,7 @@ export function LeavesScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <FlatList
+        automaticallyAdjustKeyboardInsets
         data={leaves}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={Layout.page}
@@ -168,6 +172,7 @@ export function LeavesScreen() {
                   placeholder="2026-11-02"
                   maxLength={10}
                   editable={!busy}
+                  {...leaveInputProps[0]}
                 />
                 <Input
                   label="End date (YYYY-MM-DD)"
@@ -176,6 +181,7 @@ export function LeavesScreen() {
                   placeholder="2026-11-03"
                   maxLength={10}
                   editable={!busy}
+                  {...leaveInputProps[1]}
                 />
                 <Text style={styles.label}>Leave type</Text>
                 <View style={styles.types}>
@@ -197,6 +203,10 @@ export function LeavesScreen() {
                   maxLength={1000}
                   editable={!busy}
                   placeholder="Why do you need leave?"
+                  {...leaveInputProps[2]}
+                  returnKeyType="default"
+                  submitBehavior="newline"
+                  onSubmitEditing={undefined}
                 />
                 <Button
                   title="Submit leave request"
@@ -270,6 +280,7 @@ export function LeavesScreen() {
                   }
                   maxLength={500}
                   editable={!busy}
+                  {...commentInputProps[0]}
                 />
                 <Button
                   title="Approve leave"

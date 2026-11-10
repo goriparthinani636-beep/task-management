@@ -13,15 +13,19 @@ import {
   Alert,
   ScrollView,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useAuth } from '../store/useAuth';
 import { api } from '../services/api';
 import { Colors } from '../theme/colors';
+import { useFormKeyboard } from '../hooks/useFormKeyboard';
 
 export const ProfileScreen = () => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [saving, setSaving] = useState(false);
+  const passwordInputProps = useFormKeyboard(2);
   const auth = useAuth();
 
   const { user, logout, notificationStatus, retryNotifications } = auth;
@@ -47,7 +51,16 @@ export const ProfileScreen = () => {
     currentUser?.name || emailText.split('@')[0] || 'My account';
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={Layout.page}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={Layout.page}
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
+    >
       <ScreenHeading
         compact
         eyebrow="YOUR WORKSPACE"
@@ -118,6 +131,7 @@ export const ProfileScreen = () => {
           onChangeText={setCurrentPassword}
           autoCapitalize="none"
           style={[Layout.input, { marginBottom: 12 }]}
+          {...passwordInputProps[0]}
         />
         <TextInput
           placeholder="New password (6+ characters)"
@@ -127,6 +141,7 @@ export const ProfileScreen = () => {
           onChangeText={setNewPassword}
           autoCapitalize="none"
           style={Layout.input}
+          {...passwordInputProps[1]}
         />
         <Button
           title={saving ? 'Saving…' : 'Change password'}
@@ -172,6 +187,7 @@ export const ProfileScreen = () => {
         <Text style={styles.logoutBtnText}>Log Out</Text>
       </TouchableOpacity>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

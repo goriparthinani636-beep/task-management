@@ -24,6 +24,7 @@ import { api } from '../services/api';
 import { Colors } from '../theme/colors';
 import { fileUrl, openFile, uploadedFiles, validateFile } from '../services/files';
 import { removeEmployeeResume, saveEmployee } from '../services/employees';
+import { useFormKeyboard } from '../hooks/useFormKeyboard';
 export interface Employee {
   id: number;
   firstName: string;
@@ -121,6 +122,7 @@ export const EmployeesScreen = () => {
   const [resumeFileName, setResumeFileName] = useState('');
   const [pickedResume, setPickedResume] =
     useState<DocumentPicker.DocumentPickerAsset | null>(null);
+  const employeeInputProps = useFormKeyboard(8);
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
     return () => clearTimeout(timer);
@@ -386,7 +388,10 @@ export const EmployeesScreen = () => {
     );
   }
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <ScreenHeading
         eyebrow="WORKSPACE / PEOPLE"
         title="Your team"
@@ -433,6 +438,7 @@ export const EmployeesScreen = () => {
       </View>
       {/* Employee List */}
       <FlatList
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={{ paddingBottom: 24, flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
         data={employees}
@@ -544,10 +550,14 @@ export const EmployeesScreen = () => {
       >
         <KeyboardAvoidingView
           style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <View style={styles.modalContent}>
-            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator>
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator
+              automaticallyAdjustKeyboardInsets
+            >
               <Text style={styles.modalTitle}>
                 {editingEmployee ? 'Edit Employee' : 'Add New Employee'}
               </Text>
@@ -564,6 +574,7 @@ export const EmployeesScreen = () => {
                 placeholder="https://.../resume.pdf"
                 autoCapitalize="none"
                 keyboardType="url"
+                {...employeeInputProps[0]}
               />
               <Text style={styles.label}>Resume File</Text>
               <TouchableOpacity
@@ -615,6 +626,7 @@ export const EmployeesScreen = () => {
                     setEmail(loginName ? loginName + '@gmail.com' : '');
                 }}
                 placeholder="First name"
+                {...employeeInputProps[1]}
               />
               <Text style={styles.label}>Last Name *</Text>
               <TextInput
@@ -622,6 +634,7 @@ export const EmployeesScreen = () => {
                 value={lastName}
                 onChangeText={setLastName}
                 placeholder="Last name"
+                {...employeeInputProps[2]}
               />
               <Text style={styles.label}>Email / login email *</Text>
               <TextInput
@@ -631,6 +644,7 @@ export const EmployeesScreen = () => {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 placeholder="employee@example.com"
+                {...employeeInputProps[3]}
               />
               <Text style={styles.label}>
                 {editingEmployee ? 'New login password (optional)' : 'Login password *'}
@@ -647,6 +661,7 @@ export const EmployeesScreen = () => {
                     ? 'Leave blank to keep current password'
                     : 'At least 6 characters'
                 }
+                {...employeeInputProps[4]}
               />
               <Text style={styles.resumeDescription}>
                 This email and password are used for Employee login. Passwords are never
@@ -659,6 +674,7 @@ export const EmployeesScreen = () => {
                 onChangeText={setPhone}
                 keyboardType="phone-pad"
                 placeholder="Phone number"
+                {...employeeInputProps[5]}
               />
               <Text style={styles.label}>Department *</Text>
               <TextInput
@@ -666,6 +682,7 @@ export const EmployeesScreen = () => {
                 value={department}
                 onChangeText={setDepartment}
                 placeholder="e.g. IT, HR, Finance"
+                {...employeeInputProps[6]}
               />
               <Text style={styles.label}>Designation *</Text>
               <TextInput
@@ -673,6 +690,7 @@ export const EmployeesScreen = () => {
                 value={designation}
                 onChangeText={setDesignation}
                 placeholder="e.g. Developer, Lead"
+                {...employeeInputProps[7]}
               />
               <Text style={styles.label}>Status</Text>
               <View style={styles.statusToggleRow}>
@@ -867,7 +885,7 @@ export const EmployeesScreen = () => {
           </View>
         </View>
       </Modal>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 const styles = StyleSheet.create({

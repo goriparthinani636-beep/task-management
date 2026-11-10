@@ -15,9 +15,12 @@ import {
   Text,
   TextInput,
   View,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect } from 'expo-router';
+import { useFormKeyboard } from '../hooks/useFormKeyboard';
 import { api } from '../services/api';
 import {
   ALLOWED_EXTENSIONS,
@@ -46,6 +49,7 @@ export const FileUploadScreen = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const remarkInputProps = useFormKeyboard(files.length);
   const deleting = useRef(false);
 
   const confirmDelete = (file: UploadedFile) => {
@@ -309,8 +313,12 @@ export const FileUploadScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <FlatList
+        automaticallyAdjustKeyboardInsets
         data={uploadedFiles}
         keyExtractor={(item) => String(item.id)}
         style={{ flex: 1 }}
@@ -352,7 +360,7 @@ export const FileUploadScreen = () => {
                   title="Ready to upload"
                   detail={files.length + ' SELECTED'}
                 />
-                {files.map((item) => (
+                {files.map((item, index) => (
                   <View style={styles.fileCard} key={item.id}>
                     <View style={styles.fileTop}>
                       <View style={styles.typeBadge}>
@@ -375,6 +383,7 @@ export const FileUploadScreen = () => {
                       onChangeText={(text) => updateRemark(item.id, text)}
                       editable={!isUploading}
                       maxLength={1000}
+                      {...remarkInputProps[index]}
                     />
                     <Button
                       title="Remove from selection"
@@ -470,7 +479,7 @@ export const FileUploadScreen = () => {
           />
         }
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 const styles = StyleSheet.create({

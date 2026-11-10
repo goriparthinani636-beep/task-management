@@ -17,9 +17,11 @@ import { Colors } from '../theme/colors';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { useAuth } from '../store/useAuth';
+import { useFormKeyboard } from '../hooks/useFormKeyboard';
 
 export const LoginScreen = () => {
   const auth = useAuth();
+  const inputProps = useFormKeyboard(2);
 
   const { login, isSigningIn, isLoggingOut } = auth;
   const loading = isSigningIn || isLoggingOut;
@@ -89,12 +91,13 @@ export const LoginScreen = () => {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.keyboardContainer}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
       >
         <View style={styles.loginHero}>
           <View style={styles.loginBrand}>
@@ -186,6 +189,7 @@ export const LoginScreen = () => {
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
+            {...inputProps[0]}
           />
 
           <Input
@@ -194,6 +198,7 @@ export const LoginScreen = () => {
             onChangeText={setPassword}
             secureTextEntry
             autoCapitalize="none"
+            {...inputProps[1]}
           />
 
           <Button

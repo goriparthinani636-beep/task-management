@@ -1,5 +1,5 @@
 // src/components/Input.tsx
-import React, { useState } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native';
 import { Colors } from '../theme/colors';
 
@@ -8,12 +8,16 @@ interface Props extends TextInputProps {
   error?: string;
 }
 
-export const Input: React.FC<Props> = ({ label, error, style, ...props }) => {
+export const Input = forwardRef<TextInput, Props>(function Input(
+  { label, error, style, ...props },
+  ref,
+) {
   const [focused, setFocused] = useState(false);
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
+        ref={ref}
         style={[
           styles.input,
           focused ? styles.inputFocused : null,
@@ -35,7 +39,7 @@ export const Input: React.FC<Props> = ({ label, error, style, ...props }) => {
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

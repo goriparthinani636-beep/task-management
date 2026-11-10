@@ -6,15 +6,18 @@ import { Colors } from '../theme/colors';
 import React, { useCallback, useState } from 'react';
 import {
   ScrollView,
+  KeyboardAvoidingView,
   View,
   Text,
   TextInput,
   Alert,
   Switch,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { api } from '../services/api';
+import { useFormKeyboard } from '../hooks/useFormKeyboard';
 
 type Account = {
   id: number;
@@ -40,6 +43,7 @@ export default function AccountsScreen() {
   const [form, setForm] = useState(empty);
   const [id, setId] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const inputProps = useFormKeyboard(5);
   const load = useCallback(async () => {
     try {
       setAccounts((await api.get<Account[]>('/accounts')).data);
@@ -79,11 +83,16 @@ export default function AccountsScreen() {
     }
   };
   return (
-    <ScrollView
-      style={{ backgroundColor: Colors.background }}
-      contentContainerStyle={styles.page}
-      keyboardShouldPersistTaps="handled"
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <ScrollView
+        style={{ backgroundColor: Colors.background }}
+        contentContainerStyle={styles.page}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+      >
       <ScreenHeading
         compact
         eyebrow="MANAGER / ACCESS"
@@ -99,7 +108,7 @@ export default function AccountsScreen() {
           blank to keep it.
         </Text>
         {(['email', 'firstName', 'lastName', 'employeeId', 'password'] as const).map(
-          (key) => (
+          (key, index) => (
             <View key={key}>
               <Text style={styles.label}>
                 {
@@ -129,6 +138,7 @@ export default function AccountsScreen() {
                       : 'default'
                 }
                 onChangeText={(value) => setForm((old) => ({ ...old, [key]: value }))}
+                {...inputProps[index]}
               />
             </View>
           ),
@@ -189,7 +199,8 @@ export default function AccountsScreen() {
           />
         </View>
       ))}
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 const styles = StyleSheet.create({

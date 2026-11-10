@@ -25,6 +25,7 @@ import { useAppSelector } from '../store/hooks';
 import { selectCurrentUser } from '../store/authSlice';
 import { api } from '../services/api';
 import { Colors } from '../theme/colors';
+import { useFormKeyboard } from '../hooks/useFormKeyboard';
 
 interface EmployeeSimple {
   id: number;
@@ -53,6 +54,7 @@ const PRIORITIES = ['Low', 'Medium', 'High'];
 
 export const TasksScreen = () => {
   const router = useRouter();
+  const taskInputProps = useFormKeyboard(2);
   const { taskId, compose } = useLocalSearchParams<{
     taskId?: string;
     compose?: string;
@@ -289,8 +291,12 @@ export const TasksScreen = () => {
     if (!formSubmitting) setModalVisible(false);
   };
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <FlatList
+        automaticallyAdjustKeyboardInsets
         data={filteredTasks}
         keyExtractor={(item) => String(item.id)}
         showsVerticalScrollIndicator={false}
@@ -557,6 +563,7 @@ export const TasksScreen = () => {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.formContent}
+              automaticallyAdjustKeyboardInsets
             >
               <Text style={styles.label}>Task title *</Text>
               <TextInput
@@ -567,6 +574,7 @@ export const TasksScreen = () => {
                 placeholderTextColor={Colors.textMuted}
                 accessibilityLabel="Task title"
                 editable={!formSubmitting}
+                {...taskInputProps[0]}
               />
               <Text style={styles.label}>Description</Text>
               <TextInput
@@ -578,6 +586,10 @@ export const TasksScreen = () => {
                 multiline
                 accessibilityLabel="Task description"
                 editable={!formSubmitting}
+                {...taskInputProps[1]}
+                returnKeyType="default"
+                submitBehavior="newline"
+                onSubmitEditing={undefined}
               />
               <View style={styles.assignmentHeader}>
                 <Text style={styles.label}>Assign to employee *</Text>
@@ -725,7 +737,7 @@ export const TasksScreen = () => {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
