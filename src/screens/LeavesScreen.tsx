@@ -9,12 +9,14 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
-import { EmptyState, ScreenHeading } from '../components/ScreenUI';
+import { EmptyState, ScreenHeading, SearchField } from '../components/ScreenUI';
+import { AppIcon } from '../components/AppIcon';
 import { useAppSelector } from '../store/hooks';
 import { selectCurrentUser } from '../store/authSlice';
 import {
@@ -31,6 +33,12 @@ import { Colors } from '../theme/colors';
 import { Layout } from '../theme/layout';
 import { useFormKeyboard } from '../hooks/useFormKeyboard';
 
+function statusPillStyle(status: LeaveItem['status']) {
+  if (status === 'Approved') return styles.approvedStatus;
+  if (status === 'Rejected') return styles.rejectedStatus;
+  return styles.pendingStatus;
+}
+
 export function LeavesScreen() {
   const user = useAppSelector(selectCurrentUser);
   const manager = user?.role === 'Manager';
@@ -44,6 +52,8 @@ export function LeavesScreen() {
   const [leaveType, setLeaveType] = useState<string>('Casual');
   const [reason, setReason] = useState('');
   const [comments, setComments] = useState<Record<number, string>>({});
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'All' | LeaveItem['status']>('All');
   const leaveInputProps = useFormKeyboard(3);
   const commentInputProps = useFormKeyboard(1);
   const generation = useRef(0);
@@ -122,6 +132,29 @@ export function LeavesScreen() {
     }
   }
 
+  const visibleLeaves = leaves.filter((item) => {
+    if (statusFilter !== 'All' && item.status !== statusFilter) return false;
+    const needle = search.trim().toLowerCase();
+    if (!needle) return true;
+    return [
+      item.employeeName,
+      item.employeeId,
+      item.id,
+      item.leaveType,
+      item.startDate,
+      item.endDate,
+      item.reason,
+      item.status,
+      item.managerComment,
+    ].some((value) => String(value ?? '').toLowerCase().includes(needle));
+  });
+  const leaveCounts = {
+    All: leaves.length,
+    Pending: leaves.filter((item) => item.status === 'Pending').length,
+    Approved: leaves.filter((item) => item.status === 'Approved').length,
+    Rejected: leaves.filter((item) => item.status === 'Rejected').length,
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.screen}
@@ -129,7 +162,7 @@ export function LeavesScreen() {
     >
       <FlatList
         automaticallyAdjustKeyboardInsets
-        data={leaves}
+        data={visibleLeaves}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={Layout.page}
         keyboardShouldPersistTaps="handled"
@@ -155,10 +188,13 @@ export function LeavesScreen() {
             />
             {error ? <Text style={styles.error}>{error}</Text> : null}
             {manager ? (
-              <Text style={styles.summary}>
-                {leaves.filter((item) => item.status === 'Pending').length} pending
-                requests
-              </Text>
+              <View style={styles.summaryCard}>
+                <View style={styles.summaryMark} />
+                <View>
+                  <Text style={styles.summaryCount}>{leaveCounts.Pending} waiting</Text>
+                  <Text style={styles.muted}>Team requests need your review</Text>
+                </View>
+              </View>
             ) : (
               <View style={styles.card}>
                 <Text style={styles.title}>Apply for leave</Text>
@@ -215,6 +251,26 @@ export function LeavesScreen() {
                 />
               </View>
             )}
+            <SearchField
+              value={search}
+              onChangeText={setSearch}
+              placeholder={manager ? 'Search employee, date, or request…' : 'Search leave history…'}
+            />
+            <View style={styles.filterRow}>
+              {(['All', 'Pending', 'Approved', 'Rejected'] as const).map((filter) => (
+                <TouchableOpacity
+                  key={filter}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: statusFilter === filter }}
+                  onPress={() => setStatusFilter(filter)}
+                  style={[styles.filterChip, statusFilter === filter && styles.filterChipActive]}
+                >
+                  <Text style={[styles.filterText, statusFilter === filter && styles.filterTextActive]}>
+                    {filter} <Text style={statusFilter === filter ? styles.filterCountActive : styles.filterCount}>({leaveCounts[filter]})</Text>
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
             <Text style={styles.title}>
               {manager ? 'Team applications' : 'Application history'}
             </Text>
@@ -226,32 +282,22 @@ export function LeavesScreen() {
           ) : !error ? (
             <EmptyState
               icon="task"
-              title="No leave requests"
+              title={search || statusFilter !== 'All' ? 'No matching requests' : 'No leave requests'}
               message={
-                manager
+                search || statusFilter !== 'All'
+                  ? 'Try a different search or status filter.'
+                  : manager
                   ? 'Employee requests will appear here.'
                   : 'Your submitted applications will appear here.'
               }
             />
-          ) : null
+          ) : undefined
         }
         renderItem={({ item }) => (
           <View style={[styles.card, String(item.id) === leaveId && styles.highlight]}>
             <View style={styles.row}>
               <Text style={styles.title}>{item.leaveType} leave</Text>
-              <Text
-                style={[
-                  styles.status,
-                  {
-                    color:
-                      item.status === 'Rejected'
-                        ? Colors.error
-                        : item.status === 'Approved'
-                          ? Colors.success
-                          : Colors.warning,
-                  },
-                ]}
-              >
+              <Text style={[styles.status, statusPillStyle(item.status)]}>
                 {item.status}
               </Text>
             </View>
@@ -282,25 +328,25 @@ export function LeavesScreen() {
                   editable={!busy}
                   {...commentInputProps[0]}
                 />
-                <Button
-                  title="Approve leave"
+                <View style={styles.decisionRow}>
+                <TouchableOpacity
+                  accessibilityRole="button"
                   disabled={busy}
+                  style={[styles.decisionButton, styles.approveButton, busy && styles.disabled]}
                   onPress={() =>
-                    Alert.alert(
-                      'Approve leave?',
-                      'Save approval and notify the employee?',
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        { text: 'Approve', onPress: () => void decide(item, 'Approved') },
-                      ],
-                    )
+                    Alert.alert('Approve leave?', 'Save approval and notify the employee?', [
+                      { text: 'Cancel', style: 'cancel' },
+                      { text: 'Approve', onPress: () => void decide(item, 'Approved') },
+                    ])
                   }
-                />
-                <Button
-                  title="Reject leave"
-                  variant="secondary"
-                  color={Colors.error}
+                >
+                  <AppIcon name="check" size={17} color={Colors.success} />
+                  <Text style={styles.approveText}>Approve</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityRole="button"
                   disabled={busy}
+                  style={[styles.decisionButton, styles.rejectButton, busy && styles.disabled]}
                   onPress={() =>
                     Alert.alert(
                       'Reject leave?',
@@ -315,7 +361,11 @@ export function LeavesScreen() {
                       ],
                     )
                   }
-                />
+                >
+                  <AppIcon name="close" size={17} color={Colors.error} />
+                  <Text style={styles.rejectText}>Reject</Text>
+                </TouchableOpacity>
+                </View>
               </View>
             ) : null}
           </View>
@@ -340,8 +390,57 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
-  status: { fontWeight: '700' },
-  summary: { color: Colors.primary, fontWeight: '700' },
+  status: {
+    overflow: 'hidden',
+    borderRadius: 20,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  pendingStatus: { color: Colors.warning, backgroundColor: Colors.warningSoft },
+  approvedStatus: { color: Colors.success, backgroundColor: Colors.successSoft },
+  rejectedStatus: { color: Colors.error, backgroundColor: Colors.errorSoft },
+  summaryCard: {
+    ...Layout.card,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  summaryMark: { width: 8, height: 40, borderRadius: 4, backgroundColor: Colors.warning },
+  summaryCount: { color: Colors.textDark, fontSize: 17, fontWeight: '800', marginBottom: 3 },
+  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  filterChip: {
+    minHeight: 38,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.card,
+  },
+  filterChipActive: { borderColor: Colors.ink, backgroundColor: Colors.ink },
+  filterText: { color: Colors.textMuted, fontWeight: '700', fontSize: 11 },
+  filterTextActive: { color: Colors.card },
+  filterCount: { color: Colors.textMuted, fontWeight: '500' },
+  filterCountActive: { color: Colors.onInk, fontWeight: '500' },
+  decisionRow: { flexDirection: 'row', gap: 10, marginTop: 2 },
+  decisionButton: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: 14,
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  approveButton: { backgroundColor: Colors.successSoft, borderColor: '#BCE6CE' },
+  rejectButton: { backgroundColor: Colors.errorSoft, borderColor: '#F3D0D0' },
+  approveText: { color: Colors.success, fontSize: 13, fontWeight: '800' },
+  rejectText: { color: Colors.error, fontSize: 13, fontWeight: '800' },
+  disabled: { opacity: 0.55 },
   error: { color: Colors.error },
   highlight: { borderColor: Colors.primary, borderWidth: 2 },
 });

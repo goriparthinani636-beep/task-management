@@ -72,6 +72,7 @@ export const TasksScreen = () => {
   const [employeeQuery, setEmployeeQuery] = useState('');
   const [highOnly, setHighOnly] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [statusTask, setStatusTask] = useState<TaskItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -223,22 +224,35 @@ export const TasksScreen = () => {
     }
   };
 
-  const handleQuickStatusChange = async (task: TaskItem) => {
+  const handleQuickStatusChange = async (task: TaskItem, nextStatus: string) => {
     if (updatingId !== null) return;
+    if (task.status.toLowerCase() === nextStatus.toLowerCase()) return;
     setUpdatingId(task.id);
-    let nextStatus = 'Pending';
-    if (task.status.toLowerCase() === 'pending') nextStatus = 'InProgress';
-    else if (task.status.toLowerCase() === 'inprogress') nextStatus = 'Completed';
-    else nextStatus = 'Pending';
-
     try {
-      await api.patch(`/tasks/${task.id}/status`, { status: nextStatus });
-      loadData();
-    } catch {
-      Alert.alert('Error', 'Unable to update status.');
+      const response = await api.patch<TaskItem>(`/tasks/${task.id}/status`, {
+        status: nextStatus,
+      });
+      if (response.data?.status?.toLowerCase() !== nextStatus.toLowerCase()) {
+        throw new Error('The server did not confirm the new task status.');
+      }
+      setTasks((current) =>
+        current.map((item) =>
+          item.id === task.id ? { ...item, status: response.data.status } : item,
+        ),
+      );
+      setStatusTask(null);
+    } catch (error: any) {
+      Alert.alert(
+        'Could not update task',
+        error?.response?.data?.message ?? error?.message ?? 'Please try again.',
+      );
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  const chooseTaskStatus = (task: TaskItem) => {
+    setStatusTask(task);
   };
 
   const handleDelete = (id: number, taskTitle: string) => {
@@ -494,10 +508,10 @@ export const TasksScreen = () => {
                 <TouchableOpacity
                   accessibilityRole="button"
                   accessibilityLabel={`Change status for ${item.title}. Current status ${item.status}`}
-                  accessibilityHint="Cycles through pending, in progress and completed"
+                  accessibilityHint="Opens the status choices: pending, in progress, or completed"
                   disabled={updatingId !== null}
                   style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}
-                  onPress={() => handleQuickStatusChange(item)}
+                  onPress={() => chooseTaskStatus(item)}
                 >
                   <Text style={[styles.statusText, { color: statusStyle.text }]}>
                     {updatingId === item.id
@@ -737,6 +751,46 @@ export const TasksScreen = () => {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      <Modal
+        visible={statusTask !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setStatusTask(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.statusModal}>
+            <Text style={styles.modalEyebrow}>UPDATE PROGRESS</Text>
+            <Text style={styles.modalTitle}>Change task status</Text>
+            <Text style={styles.statusHelp}>
+              Current: {statusTask?.status === 'InProgress' ? 'In progress' : statusTask?.status}. You can change it again anytime.
+            </Text>
+            {[
+              { value: 'Pending', label: 'Pending', color: Colors.textMuted, bg: Colors.surface },
+              { value: 'InProgress', label: 'In progress', color: Colors.warning, bg: Colors.warningSoft },
+              { value: 'Completed', label: 'Completed', color: Colors.success, bg: Colors.successSoft },
+            ].map((option) => {
+              const selected = statusTask?.status.toLowerCase() === option.value.toLowerCase();
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  disabled={updatingId !== null}
+                  style={[styles.statusOption, { backgroundColor: option.bg }, selected && styles.statusOptionSelected]}
+                  onPress={() => statusTask && void handleQuickStatusChange(statusTask, option.value)}
+                >
+                  <View style={[styles.statusOptionDot, { backgroundColor: option.color }]} />
+                  <Text style={[styles.statusOptionText, { color: option.color }]}>{option.label}</Text>
+                  {selected && <AppIcon name="check" size={17} color={option.color} />}
+                </TouchableOpacity>
+              );
+            })}
+            <TouchableOpacity style={styles.statusCancel} onPress={() => setStatusTask(null)}>
+              <Text style={styles.cancelBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -895,6 +949,30 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     overflow: 'hidden',
   },
+  statusModal: {
+    ...Layout.card,
+    width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
+    padding: 22,
+    gap: 12,
+    borderRadius: 24,
+  },
+  statusHelp: { color: Colors.textMuted, fontSize: 13, lineHeight: 20, marginBottom: 4 },
+  statusOption: {
+    minHeight: 52,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  statusOptionSelected: { borderColor: Colors.primary },
+  statusOptionDot: { width: 9, height: 9, borderRadius: 5 },
+  statusOptionText: { flex: 1, fontSize: 14, fontWeight: '700' },
+  statusCancel: { minHeight: 42, justifyContent: 'center', alignItems: 'center', marginTop: 2 },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
