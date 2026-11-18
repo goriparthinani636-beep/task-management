@@ -20,8 +20,6 @@ import { Colors } from '../theme/colors';
 import { Layout } from '../theme/layout';
 import { AppIcon, type IconName } from '../components/AppIcon';
 import { EmptyState, SectionTitle } from '../components/ScreenUI';
-import { ElementFlags } from 'typescript';
-import { unstable_hasStaticViewConfig } from 'react-native/Libraries/NativeComponent/NativeComponentRegistry';
 
 type DashboardStats = {
   totalEmployees: number;

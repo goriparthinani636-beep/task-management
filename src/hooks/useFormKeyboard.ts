@@ -1,15 +1,15 @@
 import { useMemo, useRef } from 'react';
 import type { Ref } from 'react';
-import type { TextInput, TextInputProps } from 'react-native';
+import type { TextInputInstance, TextInputProps } from 'react-native';
 
 type FormKeyboardProps = Pick<
   TextInputProps,
   'onSubmitEditing' | 'returnKeyType' | 'submitBehavior'
-> & { ref: Ref<TextInput> };
+> & { ref: Ref<TextInputInstance> };
 
 /** Gives form inputs a Next key and focuses the following field. */
 export function useFormKeyboard(fieldCount: number) {
-  const fields = useRef<(TextInput | null)[]>([]);
+  const fields = useRef<(TextInputInstance | null)[]>([]);
   return useMemo(
     () =>
       Array.from({ length: fieldCount }, (_, index): FormKeyboardProps => ({

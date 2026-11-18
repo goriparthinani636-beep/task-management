@@ -5,11 +5,11 @@ import { Platform } from 'react-native';
 type NotificationModule = typeof import('expo-notifications');
 let cached: NotificationModule | null | undefined;
 
-// Expo Go and older APKs may not contain the installed notification module.
-// Never let an optional notification feature prevent the app from loading.
+// Expo Go does not support Android remote push notifications. Detect it using
+// its app ownership/config markers so optional push setup cannot crash startup.
 export function getNativeNotifications(): NotificationModule | null {
   if (Platform.OS !== 'android' && Platform.OS !== 'ios') return null;
-  if (Constants.executionEnvironment === 'storeClient') return null;
+  if (Constants.appOwnership === 'expo' || Constants.expoGoConfig != null) return null;
   if (cached !== undefined) return cached;
   try {
     // Metro needs a literal require; loading must happen after the runtime check.

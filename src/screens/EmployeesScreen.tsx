@@ -456,7 +456,7 @@ export const EmployeesScreen = () => {
         ListFooterComponent={
           loadingMore ? (
             <ActivityIndicator style={{ padding: 18 }} color={Colors.primary} />
-          ) : null
+          ) : undefined
         }
         renderItem={({ item }) => (
           <View style={styles.card}>

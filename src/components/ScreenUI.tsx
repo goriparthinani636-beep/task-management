@@ -95,18 +95,18 @@ export function SectionTitle({ title, detail }: { title: string; detail?: string
   );
 }
 const styles = StyleSheet.create({
-  heading: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 },
+  heading: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 18 },
   eyebrow: {
     color: Colors.primary,
     fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 1.8,
-    marginBottom: 8,
+    letterSpacing: 1.5,
+    marginBottom: 7,
   },
-  title: { color: Colors.textDark, fontSize: 28, fontWeight: '800', letterSpacing: -0.8 },
+  title: { color: Colors.textDark, fontSize: 29, fontWeight: '800', letterSpacing: -0.9 },
   subtitle: { color: Colors.textMuted, fontSize: 13, lineHeight: 20, marginTop: 6 },
   search: {
-    minHeight: 52,
+    minHeight: 54,
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 16,
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 16,
+    borderRadius: 17,
   },
   searchInput: {
     flex: 1,
@@ -127,10 +127,12 @@ const styles = StyleSheet.create({
   clear: { minHeight: 44, minWidth: 40, alignItems: 'center', justifyContent: 'center' },
   empty: {
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 22,
     paddingVertical: 36,
     backgroundColor: Colors.card,
-    borderRadius: 20,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   emptyIcon: {
     width: 64,

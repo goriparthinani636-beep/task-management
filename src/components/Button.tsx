@@ -52,14 +52,19 @@ export const Button: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 52,
+    minHeight: 54,
     paddingVertical: 15,
     paddingHorizontal: 18,
     backgroundColor: Colors.primary,
-    borderRadius: 15,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 5,
+    shadowColor: Colors.ink,
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 7,
+    elevation: 1,
   },
   disabled: {
     opacity: 0.6,
@@ -67,7 +72,8 @@ const styles = StyleSheet.create({
   text: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: 0.15,
     textAlign: 'center',
   },
 });

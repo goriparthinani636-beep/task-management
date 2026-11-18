@@ -76,13 +76,14 @@ export default function MainTabs() {
         tabBarStyle: {
           backgroundColor: Colors.card,
           borderTopColor: Colors.border,
-          paddingTop: 9,
+          borderTopWidth: 1,
+          paddingTop: 8,
           paddingBottom: Math.max(insets.bottom, 8),
-          height: 62 + Math.max(insets.bottom, 8),
+          height: 64 + Math.max(insets.bottom, 8),
         },
         tabBarActiveBackgroundColor: Colors.primarySoft,
-        tabBarItemStyle: { borderRadius: 16, marginHorizontal: 3 },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '600' },
+        tabBarItemStyle: { borderRadius: 15, marginHorizontal: 3, marginBottom: 3 },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '700' },
         tabBarIcon: ({ color, size, focused }) => (
           <TabIcon
             name={icons[route.name as keyof typeof icons]}

@@ -1,6 +1,13 @@
 // src/components/Input.tsx
 import React, { forwardRef, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  type TextInputInstance,
+  type TextInputProps,
+} from 'react-native';
 import { Colors } from '../theme/colors';
 
 interface Props extends TextInputProps {
@@ -8,7 +15,7 @@ interface Props extends TextInputProps {
   error?: string;
 }
 
-export const Input = forwardRef<TextInput, Props>(function Input(
+export const Input = forwardRef<TextInputInstance, Props>(function Input(
   { label, error, style, ...props },
   ref,
 ) {
@@ -43,30 +50,30 @@ export const Input = forwardRef<TextInput, Props>(function Input(
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: 12,
     width: '100%',
   },
   label: {
     fontSize: 12,
     fontWeight: '700',
     color: Colors.textDark,
-    marginBottom: 9,
+    marginBottom: 8,
   },
   input: {
-    minHeight: 52,
+    minHeight: 54,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 14,
+    borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.card,
     fontSize: 15,
     color: Colors.textDark,
   },
   inputError: {
     borderColor: Colors.error,
   },
-  inputFocused: { borderColor: Colors.primary, backgroundColor: Colors.card },
+  inputFocused: { borderColor: Colors.primary, borderWidth: 1.5, backgroundColor: Colors.card },
   errorText: {
     color: Colors.error,
     fontSize: 12,
