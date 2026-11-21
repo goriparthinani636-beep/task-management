@@ -11,6 +11,8 @@ export type EmployeePayload = {
   status: string;
   resumeUrl: string | null;
   resumeFileName: string | null;
+  aadhaarNumber?: string;
+  aadhaarConsentConfirmed?: boolean;
 };
 
 export async function removeEmployeeResume(id: number) {
@@ -57,6 +59,7 @@ export async function saveEmployee(
     );
   }
   for (const key of Object.keys(payload) as (keyof EmployeePayload)[]) {
+    if (key === 'aadhaarNumber' || key === 'aadhaarConsentConfirmed') continue;
     if ((saved?.[key] ?? null) !== (payload[key] ?? null)) {
       if (key === 'resumeUrl' || key === 'resumeFileName') {
         throw new Error(

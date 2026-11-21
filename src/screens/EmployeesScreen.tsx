@@ -120,9 +120,11 @@ export const EmployeesScreen = () => {
   const [status, setStatus] = useState('Active');
   const [resumeUrl, setResumeUrl] = useState('');
   const [resumeFileName, setResumeFileName] = useState('');
+  const [aadhaarNumber, setAadhaarNumber] = useState('');
+  const [aadhaarConsentConfirmed, setAadhaarConsentConfirmed] = useState(false);
   const [pickedResume, setPickedResume] =
     useState<DocumentPicker.DocumentPickerAsset | null>(null);
-  const employeeInputProps = useFormKeyboard(8);
+  const employeeInputProps = useFormKeyboard(9);
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
     return () => clearTimeout(timer);
@@ -197,6 +199,8 @@ export const EmployeesScreen = () => {
     setStatus('Active');
     setResumeUrl('');
     setResumeFileName('');
+    setAadhaarNumber('');
+    setAadhaarConsentConfirmed(false);
     setPickedResume(null);
   };
   const openAddModal = () => {
@@ -216,6 +220,8 @@ export const EmployeesScreen = () => {
     setStatus(emp.status || 'Active');
     setResumeUrl(emp.resumeUrl || '');
     setResumeFileName(emp.resumeFileName || '');
+    setAadhaarNumber('');
+    setAadhaarConsentConfirmed(false);
     setPickedResume(null);
     setModalVisible(true);
   };
@@ -280,6 +286,14 @@ export const EmployeesScreen = () => {
       );
       return;
     }
+    if (aadhaarNumber && !/^\d{12}$/.test(aadhaarNumber)) {
+      Alert.alert('Check Aadhaar number', 'Enter exactly 12 digits, or leave this blank.');
+      return;
+    }
+    if (aadhaarNumber && !aadhaarConsentConfirmed) {
+      Alert.alert('Employee consent required', 'Confirm that the employee agreed to this use before saving their Aadhaar number.');
+      return;
+    }
     if (!pickedResume && resumeUrl.trim()) {
       const validUrl = /^https?:\/\/\S+$/i.test(resumeUrl.trim());
       if (!validUrl) {
@@ -312,12 +326,26 @@ export const EmployeesScreen = () => {
         status,
         resumeUrl: savedResumeUrl ? fileUrl(savedResumeUrl) : null,
         resumeFileName: savedResumeFileName || null,
+        ...(aadhaarNumber ? { aadhaarNumber, aadhaarConsentConfirmed } : {}),
       };
       const saved: Employee = await saveEmployee(
         payload,
         editingEmployee?.id,
         (id) => {
-          setEditingEmployee({ ...payload, id });
+          setEditingEmployee({
+            id,
+            firstName: payload.firstName,
+            lastName: payload.lastName,
+            email: payload.email,
+            phone: payload.phone,
+            department: payload.department,
+            designation: payload.designation,
+            status: payload.status,
+            resumeUrl: payload.resumeUrl,
+            resumeFileName: payload.resumeFileName,
+          });
+          setAadhaarNumber('');
+          setAadhaarConsentConfirmed(false);
           setPassword('');
         },
         password || undefined,
@@ -692,6 +720,37 @@ export const EmployeesScreen = () => {
                 placeholder="e.g. Developer, Lead"
                 {...employeeInputProps[7]}
               />
+              <Text style={styles.label}>Employee Aadhaar number (optional)</Text>
+              <TextInput
+                style={styles.input}
+                value={aadhaarNumber}
+                onChangeText={(value) => setAadhaarNumber(value.replace(/\D/g, '').slice(0, 12))}
+                keyboardType="number-pad"
+                maxLength={12}
+                secureTextEntry
+                placeholder="12 digits"
+                {...employeeInputProps[8]}
+              />
+              <Text style={styles.resumeDescription}>
+                {editingEmployee
+                  ? 'Enter the number only if the employee agreed to this use. Leave blank to keep the existing encrypted number.'
+                  : 'Enter the number only if the employee agreed to this use. It is encrypted in the database; only its last 4 digits are used for the check.'}
+              </Text>
+              {!!aadhaarNumber && (
+                <TouchableOpacity
+                  style={styles.aadhaarConsentRow}
+                  onPress={() => setAadhaarConsentConfirmed((current) => !current)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: aadhaarConsentConfirmed }}
+                >
+                  <View style={[styles.aadhaarCheckbox, aadhaarConsentConfirmed && styles.aadhaarCheckboxChecked]}>
+                    {aadhaarConsentConfirmed ? <Text style={styles.aadhaarCheckmark}>✓</Text> : null}
+                  </View>
+                  <Text style={styles.aadhaarConsentText}>
+                    I confirm the employee agreed to save their Aadhaar number for this app verification.
+                  </Text>
+                </TouchableOpacity>
+              )}
               <Text style={styles.label}>Status</Text>
               <View style={styles.statusToggleRow}>
                 {['Active', 'Inactive'].map((s) => (
@@ -1275,6 +1334,28 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 12,
   },
+  aadhaarConsentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 8,
+    marginBottom: 10,
+  },
+  aadhaarCheckbox: {
+    width: 22,
+    height: 22,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aadhaarCheckboxChecked: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  aadhaarCheckmark: { color: Colors.card, fontWeight: '800', fontSize: 14 },
+  aadhaarConsentText: { flex: 1, color: Colors.textMuted, fontSize: 12, lineHeight: 18 },
   resumeOpenBtn: {
     backgroundColor: Colors.primary,
     borderRadius: 12,

@@ -4,11 +4,17 @@ import { ScreenHeading, EmptyState, SectionTitle } from '../components/ScreenUI'
 import { Layout } from '../theme/layout';
 import { Colors } from '../theme/colors';
 import React, { useCallback, useRef, useState } from 'react';
-import { ScrollView, Text, View, StyleSheet, RefreshControl } from 'react-native';
+import { ScrollView, Text, View, StyleSheet, RefreshControl, TextInput, Alert } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useAppSelector } from '../store/hooks';
 import { selectCurrentUser } from '../store/authSlice';
 import { loadMyEmployee } from '../services/employeeScope';
+import {
+  getAadhaarVerificationStatus,
+  verifyAadhaarLastFour,
+  type AadhaarVerificationStatus,
+} from '../services/aadhaar';
+import { Button } from '../components/Button';
 import type { Employee } from './EmployeesScreen';
 
 export default function MyDetailsScreen() {
@@ -17,6 +23,10 @@ export default function MyDetailsScreen() {
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [aadhaarStatus, setAadhaarStatus] = useState<AadhaarVerificationStatus | null>(null);
+  const [aadhaarLastFour, setAadhaarLastFour] = useState('');
+  const [verifyingAadhaar, setVerifyingAadhaar] = useState(false);
+  const [aadhaarError, setAadhaarError] = useState('');
   const load = useCallback(async () => {
     const current = ++generation.current;
     setEmployee(null);
@@ -26,6 +36,18 @@ export default function MyDetailsScreen() {
       if (!user) return;
       const data = await loadMyEmployee(user);
       if (generation.current === current) setEmployee(data);
+      try {
+        const verification = await getAadhaarVerificationStatus();
+        if (generation.current === current) {
+          setAadhaarStatus(verification);
+          setAadhaarError('');
+        }
+      } catch {
+        if (generation.current === current) {
+          setAadhaarStatus(null);
+          setAadhaarError('Aadhaar verification status could not load. Pull down to retry.');
+        }
+      }
     } catch (error: any) {
       if (generation.current === current)
         setError(error?.message ?? 'Unable to load your details. Pull down to retry.');
@@ -33,6 +55,26 @@ export default function MyDetailsScreen() {
       if (generation.current === current) setLoading(false);
     }
   }, [user]);
+  const verify = async () => {
+    if (!/^\d{4}$/.test(aadhaarLastFour)) {
+      setAadhaarError('Enter exactly 4 digits.');
+      return;
+    }
+    setVerifyingAadhaar(true);
+    setAadhaarError('');
+    try {
+      await verifyAadhaarLastFour(aadhaarLastFour);
+      setAadhaarStatus({ isEnrolled: true, isVerified: true });
+      setAadhaarLastFour('');
+      Alert.alert('Verified', 'Your Aadhaar last-four check is complete.');
+    } catch (error: any) {
+      setAadhaarError(
+        error?.response?.data?.message ?? 'Unable to verify those digits. Please try again.',
+      );
+    } finally {
+      setVerifyingAadhaar(false);
+    }
+  };
   useFocusEffect(
     useCallback(() => {
       void load();
@@ -94,6 +136,45 @@ export default function MyDetailsScreen() {
               <Text style={styles.idText}>EMPLOYEE #{employee.id}</Text>
             </View>
           </View>
+          <View style={styles.verificationCard}>
+            <Text style={styles.verificationTitle}>Aadhaar check</Text>
+            {aadhaarError && !aadhaarStatus ? (
+              <Text style={styles.aadhaarError}>{aadhaarError}</Text>
+            ) : aadhaarStatus?.isVerified ? (
+              <Text style={styles.verifiedText}>✓ Last 4 digits verified</Text>
+            ) : !aadhaarStatus?.isEnrolled ? (
+              <Text style={styles.verificationHelp}>
+                Your manager needs to pre-enroll your last 4 digits before you can verify. You can continue using the app and ask your manager to set it up.
+              </Text>
+            ) : (
+              <>
+                <Text style={styles.verificationHelp}>
+                  Enter the last 4 digits of your Aadhaar number. The app compares them with the manager-pre-enrolled number. The full number is stored encrypted in the database; this check does not contact UIDAI.
+                </Text>
+                <TextInput
+                  accessibilityLabel="Last 4 Aadhaar digits"
+                  style={styles.aadhaarInput}
+                  value={aadhaarLastFour}
+                  onChangeText={(value) => {
+                    setAadhaarLastFour(value.replace(/\D/g, '').slice(0, 4));
+                    setAadhaarError('');
+                  }}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  placeholder="4 digits"
+                  placeholderTextColor={Colors.textMuted}
+                  secureTextEntry
+                />
+                {!!aadhaarError && <Text style={styles.aadhaarError}>{aadhaarError}</Text>}
+                <Button
+                  title="Verify last 4 digits"
+                  onPress={verify}
+                  loading={verifyingAadhaar}
+                  disabled={verifyingAadhaar}
+                />
+              </>
+            )}
+          </View>
           <SectionTitle title="Your information" detail="EMPLOYEE PROFILE" />
           <View style={styles.details}>
             {fields.map(([label, value, icon], index) => (
@@ -153,6 +234,16 @@ const styles = StyleSheet.create({
   idBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 18 },
   idText: { color: Colors.onInk, fontSize: 10, letterSpacing: 1.3, fontWeight: '600' },
   details: { ...Layout.card, paddingHorizontal: 18 },
+  verificationCard: { ...Layout.card, padding: 18, marginBottom: 24, gap: 10 },
+  verificationTitle: { fontSize: 17, fontWeight: '800', color: Colors.textDark },
+  verificationHelp: { fontSize: 12, color: Colors.textMuted, lineHeight: 19 },
+  verifiedText: { color: Colors.success, fontSize: 14, fontWeight: '700' },
+  aadhaarInput: {
+    ...Layout.input,
+    width: '100%',
+    letterSpacing: 5,
+  },
+  aadhaarError: { color: Colors.error, fontSize: 12, lineHeight: 18 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

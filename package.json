@@ -34,9 +34,9 @@
   },
   "devDependencies": {
     "@react-native-community/cli": "^20.2.0",
-    "@types/react": "~19.2.2",
+    "@types/react": "~19.3.0",
     "eslint": "^9.0.0",
-    "eslint-config-expo": "~57.0.2",
+    "eslint-config-expo": "~58.0.4",
     "typescript": "~6.0.3"
   },
   "scripts": {
