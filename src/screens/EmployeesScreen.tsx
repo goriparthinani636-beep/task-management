@@ -31,6 +31,7 @@ export interface Employee {
   lastName: string;
   email: string;
   phone?: string;
+  whatsAppOptIn: boolean;
   department: string;
   designation: string;
   status: string;
@@ -115,6 +116,7 @@ export const EmployeesScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [whatsAppOptIn, setWhatsAppOptIn] = useState(false);
   const [department, setDepartment] = useState('');
   const [designation, setDesignation] = useState('');
   const [status, setStatus] = useState('Active');
@@ -194,6 +196,7 @@ export const EmployeesScreen = () => {
     setEmail('');
     setPassword('');
     setPhone('');
+    setWhatsAppOptIn(false);
     setDepartment('');
     setDesignation('');
     setStatus('Active');
@@ -215,6 +218,7 @@ export const EmployeesScreen = () => {
     setEmail(emp.email || '');
     setPassword('');
     setPhone(emp.phone || '');
+    setWhatsAppOptIn(Boolean(emp.whatsAppOptIn));
     setDepartment(emp.department || '');
     setDesignation(emp.designation || '');
     setStatus(emp.status || 'Active');
@@ -294,6 +298,10 @@ export const EmployeesScreen = () => {
       Alert.alert('Employee consent required', 'Confirm that the employee agreed to this use before saving their Aadhaar number.');
       return;
     }
+    if (whatsAppOptIn && !phone.trim()) {
+      Alert.alert('Phone number required', 'Enter the employee WhatsApp number before enabling WhatsApp updates.');
+      return;
+    }
     if (!pickedResume && resumeUrl.trim()) {
       const validUrl = /^https?:\/\/\S+$/i.test(resumeUrl.trim());
       if (!validUrl) {
@@ -321,6 +329,7 @@ export const EmployeesScreen = () => {
         lastName: lastName.trim(),
         email: email.trim(),
         phone: phone.trim(),
+        whatsAppOptIn,
         department: department.trim(),
         designation: designation.trim(),
         status,
@@ -338,6 +347,7 @@ export const EmployeesScreen = () => {
             lastName: payload.lastName,
             email: payload.email,
             phone: payload.phone,
+            whatsAppOptIn: payload.whatsAppOptIn,
             department: payload.department,
             designation: payload.designation,
             status: payload.status,
@@ -704,6 +714,19 @@ export const EmployeesScreen = () => {
                 placeholder="Phone number"
                 {...employeeInputProps[5]}
               />
+              <TouchableOpacity
+                style={styles.aadhaarConsentRow}
+                onPress={() => setWhatsAppOptIn((current) => !current)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: whatsAppOptIn }}
+              >
+                <View style={[styles.aadhaarCheckbox, whatsAppOptIn && styles.aadhaarCheckboxChecked]}>
+                  {whatsAppOptIn ? <Text style={styles.aadhaarCheckmark}>✓</Text> : null}
+                </View>
+                <Text style={styles.aadhaarConsentText}>
+                  Employee has agreed to receive task assignment and leave decision updates on WhatsApp.
+                </Text>
+              </TouchableOpacity>
               <Text style={styles.label}>Department *</Text>
               <TextInput
                 style={styles.input}
@@ -834,6 +857,11 @@ export const EmployeesScreen = () => {
                 <Text style={styles.infoLabel}>Phone</Text>
                 <Text style={styles.infoValue}>
                   {profileEmployee?.phone || 'Not provided'}
+                </Text>
+                <View style={styles.infoDivider} />
+                <Text style={styles.infoLabel}>WhatsApp updates</Text>
+                <Text style={styles.infoValue}>
+                  {profileEmployee?.whatsAppOptIn ? 'Employee opted in' : 'Not enabled'}
                 </Text>
                 <View style={styles.infoDivider} />
                 <Text style={styles.infoLabel}>Department</Text>

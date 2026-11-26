@@ -6,6 +6,7 @@ export type EmployeePayload = {
   lastName: string;
   email: string;
   phone: string;
+  whatsAppOptIn: boolean;
   department: string;
   designation: string;
   status: string;
