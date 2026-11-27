@@ -20,6 +20,7 @@ import { Colors } from '../theme/colors';
 import { Layout } from '../theme/layout';
 import { AppIcon, type IconName } from '../components/AppIcon';
 import { EmptyState, SectionTitle } from '../components/ScreenUI';
+import { useCompanyProfile } from '../store/CompanyProfileProvider';
 
 type DashboardStats = {
   totalEmployees: number;
@@ -31,6 +32,7 @@ type Attendance = { employeeId: number; workDate: string };
 
 export const DashboardScreen = () => {
   const user = useAppSelector(selectCurrentUser);
+  const { profile: companyProfile } = useCompanyProfile();
   const router = useRouter();
   const generation = useRef(0);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -83,7 +85,7 @@ export const DashboardScreen = () => {
     label: string;
     detail: string;
     icon: IconName;
-    path: '/(tabs)/employees' | '/(tabs)/tasks' | '/(tabs)/attendance' | '/(tabs)/files';
+    path: '/(tabs)/employees' | '/(tabs)/tasks' | '/(tabs)/attendance' | '/(tabs)/files' | '/company-setup';
   }[] = [
     { label: 'Team', detail: 'Manage people', icon: 'users', path: '/(tabs)/employees' },
     { label: 'Tasks', detail: 'Plan your work', icon: 'task', path: '/(tabs)/tasks' },
@@ -99,6 +101,7 @@ export const DashboardScreen = () => {
       icon: 'folder',
       path: '/(tabs)/files',
     },
+    { label: 'Company', detail: 'Company and manager details', icon: 'grid', path: '/company-setup' },
   ];
   if (loading)
     return (
@@ -148,6 +151,31 @@ export const DashboardScreen = () => {
           <Text style={{ color: Colors.error, lineHeight: 20 }}>{error}</Text>
         </View>
       ) : null}
+      <TouchableOpacity
+        style={styles.companyCard}
+        accessibilityRole="button"
+        accessibilityLabel="Open company profile setup"
+        onPress={() => router.push('/company-setup')}
+        activeOpacity={0.78}
+      >
+        <View style={styles.companyTop}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.sectionLabel}>COMPANY PROFILE</Text>
+            <Text style={styles.companyName} numberOfLines={2}>
+              {companyProfile?.companyName || 'Set up your company'}
+            </Text>
+          </View>
+          <AppIcon name="chevron" size={18} color={Colors.textMuted} />
+        </View>
+        <Text style={styles.companyContact}>
+          {companyProfile?.managerName || user?.name || 'Manager'}
+          {companyProfile?.managerEmail ? ` · ${companyProfile.managerEmail}` : ''}
+          {companyProfile?.managerPhone ? ` · ${companyProfile.managerPhone}` : ''}
+        </Text>
+        {!companyProfile && (
+          <Text style={styles.companyHint}>Add company name and manager contact details.</Text>
+        )}
+      </TouchableOpacity>
       <View style={styles.metricGrid}>
         {(
           [
@@ -468,6 +496,11 @@ const styles = StyleSheet.create({
   quickTitle: { color: Colors.textDark, fontWeight: '700', fontSize: 14, marginTop: 4 },
   quickDetail: { color: Colors.textMuted, fontSize: 11 },
   progressCard: { ...Layout.card, padding: 22, gap: 18 },
+  companyCard: { ...Layout.card, padding: 18, gap: 9 },
+  companyTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  companyName: { color: Colors.textDark, fontSize: 18, fontWeight: '800', marginTop: 3 },
+  companyContact: { color: Colors.textMuted, fontSize: 12, lineHeight: 19 },
+  companyHint: { color: Colors.primary, fontSize: 12, fontWeight: '700' },
   progressTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   sectionLabel: {
     fontSize: 9,

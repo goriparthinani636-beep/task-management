@@ -80,18 +80,32 @@ export const ProfileScreen = () => {
       </View>
 
       {user?.role === 'Manager' && (
-        <Link
-          href="/accounts"
-          style={{
-            padding: 18,
-            borderRadius: 14,
-            backgroundColor: Colors.primarySoft,
-            color: Colors.primary,
-            fontWeight: '700',
-          }}
-        >
-          Manage login accounts
-        </Link>
+        <View style={{ gap: 10 }}>
+          <Link
+            href="/company-setup"
+            style={{
+              padding: 18,
+              borderRadius: 14,
+              backgroundColor: Colors.primarySoft,
+              color: Colors.primary,
+              fontWeight: '700',
+            }}
+          >
+            Company and manager details
+          </Link>
+          <Link
+            href="/accounts"
+            style={{
+              padding: 18,
+              borderRadius: 14,
+              backgroundColor: Colors.primarySoft,
+              color: Colors.primary,
+              fontWeight: '700',
+            }}
+          >
+            Manage login accounts
+          </Link>
+        </View>
       )}
       {/* Account Details Section */}
       <View style={styles.sectionCard}>

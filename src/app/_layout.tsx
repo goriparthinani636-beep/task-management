@@ -6,6 +6,7 @@ import { useAppSelector } from '../store/hooks';
 import { selectAuth } from '../store/authSlice';
 import { NotificationNavigation } from '../components/NotificationNavigation';
 import { Colors } from '../theme/colors';
+import { CompanyProfileProvider } from '../store/CompanyProfileProvider';
 
 function Routes() {
   const { isAuthenticated, user, isLoading } = useAppSelector(selectAuth);
@@ -29,6 +30,10 @@ function Routes() {
           guard={isAuthenticated && user?.role === 'Manager'}
           redirectTo="/"
         >
+          <Stack.Screen
+            name="company-setup"
+            options={{ headerShown: false }}
+          />
           <Stack.Screen
             name="accounts"
             options={{ headerShown: true, title: 'Login accounts' }}
@@ -58,7 +63,9 @@ function Routes() {
 export default function RootLayout() {
   return (
     <AppStateProvider>
-      <Routes />
+      <CompanyProfileProvider>
+        <Routes />
+      </CompanyProfileProvider>
     </AppStateProvider>
   );
 }

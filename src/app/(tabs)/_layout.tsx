@@ -7,6 +7,7 @@ import { useAppSelector } from '../../store/hooks';
 import { selectCurrentUser } from '../../store/authSlice';
 import { Colors } from '../../theme/colors';
 import { TabIcon } from '../../components/TabIcon';
+import { useCompanyProfile } from '../../store/CompanyProfileProvider';
 
 const icons = {
   dashboard: 'Dashboard',
@@ -20,6 +21,7 @@ const icons = {
 } as const;
 export default function MainTabs() {
   const user = useAppSelector(selectCurrentUser);
+  const { profile: companyProfile } = useCompanyProfile();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const manager = user?.role === 'Manager';
@@ -36,6 +38,7 @@ export default function MainTabs() {
           <View style={{ flexDirection: 'row', gap: 9, alignItems: 'center' }}>
             <AppIcon name="grid" size={20} />
             <Text
+              numberOfLines={1}
               style={{
                 color: Colors.ink,
                 fontSize: 17,
@@ -43,7 +46,7 @@ export default function MainTabs() {
                 letterSpacing: -0.5,
               }}
             >
-              appzon<Text style={{ color: Colors.primary }}>.</Text>
+              {companyProfile?.companyName || 'appzon'}
               <Text style={{ color: Colors.textMuted, fontWeight: '400', fontSize: 11 }}>
                 {' '}
                 workspace
